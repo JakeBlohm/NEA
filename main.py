@@ -14,25 +14,30 @@ FPS = 10
 
     # A group that can control multiple buttons
 class ButtonGroup(pg.sprite.Group):
-    def update(self,mousePos):
+    def update(self, mousePos: tuple) -> list:
         pressed = []
         buttons = self.sprites()
         for button in buttons:
             pressed.append(button.update(mousePos))
         return pressed
 
-    def draw(self, screen):
+    def draw(self, screen) -> None:
         buttons = self.sprites()
         for button in buttons:
             button.draw(screen)
         
-    def setText(self,data):
+    def setText(self, data) -> None:
         buttons = self.sprites()
         for button in buttons:
             button.setText(data)
 
 class Button(pg.sprite.Sprite):
-    def __init__(self,size,textSize,screenText,name,colour, textColour,pos,group):
+    def __init__(self, size: tuple[int,int],
+                textSize: int, screenText: str, 
+                name: str, colour: tuple[int,int,int],
+                textColour: tuple[int,int,int], 
+                pos: tuple[int,int], group: ButtonGroup) -> None:
+
         print("Creating button")
         # Create button
         pg.sprite.Sprite.__init__(self)
@@ -52,7 +57,7 @@ class Button(pg.sprite.Sprite):
         self.colour = colour
         self.highlight = False
 
-    def update(self,mousePos):
+    def update(self, mousePos: tuple[int,int]) -> str:
         # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
@@ -67,44 +72,50 @@ class Button(pg.sprite.Sprite):
             self.image.fill(self.colour)
             self.highlight = False
 
-    def draw(self,screen):
+    def draw(self, screen: pg.Surface) -> None:
         # display the button then text
         screen.blit(self.image,self.rect)
         screen.blit(self.text,self.rect)
     
-    def setText(self,data):
+    def setText(self, data: dict) -> None:
         if self.name in data:
             self.screenText = data[self.name]
             self.text = self.font.render(self.screenText, 0, pg.Color(self.textColour))
 
 class BoxGroup(pg.sprite.Group):
-    def update(self,mousePos):
+    def update(self, mousePos: tuple[int,int]) -> float:
         clicked = 0
         boxes = self.sprites()
         for box in boxes:
             clicked += box.update(mousePos)
         return clicked
 
-    def draw(self, screen):
+    def draw(self, screen: pg.Surface) -> None:
         boxes = self.sprites()
         for box in boxes:
             box.draw(screen)
 
-    def getValues(self):
+    def getValues(self) -> dict:
         dictionary = {}
         boxes = self.sprites()
         for box in boxes:
             name,value=(box.getValue())
             dictionary[name] = value
-        return(dictionary)
+        return dictionary
 
-    def setValues(self,data):
+    def setValues(self, data: dict) -> None:
         boxes = self.sprites()
         for box in boxes:
             box.setValue(data)
 
 class TextBox(pg.sprite.Sprite):
-    def __init__(self,size,textSize,startValue,name,valueType,colour, textColour,pos,group,deleteValueOnClick = False):
+    def __init__(self, size: tuple[int,int], 
+                textSize: tuple[int,int], startValue: str, 
+                name: str, valueType: str,
+                colour: tuple[int,int,int], textColour: tuple[int,int,int], 
+                pos: tuple[int,int], group: BoxGroup, 
+                deleteValueOnClick: bool=False) -> None:
+
         print("Creating TextBox")
         # Create TextBox
         pg.sprite.Sprite.__init__(self)
@@ -126,7 +137,7 @@ class TextBox(pg.sprite.Sprite):
         self.textColour = textColour
         self.highlight = False
     
-    def update(self,mousePos):
+    def update(self, mousePos: tuple[int,int]) -> float:
         # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
@@ -153,23 +164,28 @@ class TextBox(pg.sprite.Sprite):
             # remove highlight effect
             self.image.fill(self.colour)
             self.highlight = False
-        return 0
+        return 0.0
 
-    def draw(self,screen):
+    def draw(self, screen: pg.Surface) -> None:
         # display the button then text
         screen.blit(self.image,self.rect)
         screen.blit(self.text,self.rect)
     
-    def getValue(self):
-        return self.name,self.value
+    def getValue(self) -> tuple[str, int]:
+        return self.name, self.value
     
-    def setValue(self,data):
+    def setValue(self, data: dict) -> None:
         if self.name in data:
             self.value = data[self.name]
             self.text = self.font.render(self.value, 0, pg.Color(self.textColour))
 
 class TickBox(pg.sprite.Sprite):
-    def __init__(self,size,textSize,startValue,name,colour,textColour,pos,group):
+    def __init__(self, size: tuple[int,int], 
+                textSize: tuple[int,int], startValue: bool, 
+                name: str, colour: tuple[int,int,int],
+                textColour: tuple[int,int,int], pos: tuple[int,int], 
+                group: BoxGroup) -> None:
+
         print("Creating TextBox")
         # Create TickBox
         pg.sprite.Sprite.__init__(self)
@@ -191,7 +207,7 @@ class TickBox(pg.sprite.Sprite):
         self.value = startValue
         self.highlight = False
     
-    def update(self,mousePos):
+    def update(self, mousePos: tuple[int,int]) -> float:
         # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
@@ -206,34 +222,40 @@ class TickBox(pg.sprite.Sprite):
             # remove highlight effect
             self.image.fill(self.textColour)
             self.highlight = False
-        return 0
+        return 0.0
 
-    def draw(self,screen):
+    def draw(self, screen: pg.Surface) -> None:
         # display the button then text
         screen.blit(self.image,self.rect)
         if self.value:
             screen.blit(self.cutout,self.rectCutout)
         screen.blit(self.text,self.pos)
     
-    def getValue(self):
-        return self.name,self.value
+    def getValue(self) -> tuple[str, int]:
+        return self.name, self.value
     
-    def setValue(self,data):
+    def setValue(self, data: dict) -> None:
         if self.name in data:
             self.value = data[self.name]
 
 class DefaultGroup(pg.sprite.Group):
-    def draw(self,screen):
+    def draw(self, screen: pg.Surface) -> None:
         sprites = self.sprites()
         for sprite in sprites:
             sprite.draw(screen)
-    def setText(self,data):
+
+    def setText(self, data: dict) -> None:
         sprites = self.sprites()
         for sprite in sprites:
             sprite.setText(data)
 
 class Text(pg.sprite.Sprite):
-    def __init__(self,textSize,text,textColour,pos,group,size = None,colour = None, alignment = "center", name = None):
+    def __init__(self, textSize: tuple[int,int], 
+                text: str, textColour : tuple[int,int,int], 
+                pos: tuple[int,int], group: DefaultGroup,
+                size: int=None, colour: tuple[int,int,int]=None,
+                alignment: str="center", name: str=None) -> None:
+
         print("Creating Text")
         # Create button
         pg.sprite.Sprite.__init__(self)
@@ -262,31 +284,43 @@ class Text(pg.sprite.Sprite):
         group = group
         group.add(self)
 
-    def draw(self,screen):
+    def draw(self, screen: pg.Surface) -> None:
         # display the button then text
         if self.backround:
             screen.blit(self.image,self.rect)
         screen.blit(self.text,self.rect)
     
-    def setText(self,data):
+    def setText(self, data: dict) -> None:
         if self.name in data:
             text = data[self.name]
             self.text = self.font.render(text, 0, pg.Color(self.textColour))
     
-def TextRender(text,scale,colour,pos,screen):
+def TextRender(text: str, scale: float, 
+                colour: tuple[int,int,int], pos: tuple[int,int], 
+                screen: pg.Surface) -> None:
+
     font = pg.font.SysFont('Arial', int(24*SCALE*scale))
     text = font.render(text, 0, pg.Color(colour))
     rect = text.get_rect(center = (pos[0]*SCALE,pos[1]*SCALE))
     screen.blit(text,rect)
 
-def SpriteRender(size,colour,pos,screen):
+def SpriteRender(size: tuple[int,int], colour: tuple[int,int,int], 
+                pos: tuple[int,int], screen: pg.Surface) -> None:
+
     image = pg.Surface([size[0]*SCALE, size[1]*SCALE])
     image.fill(colour)
     rect = image.get_rect(center = (pos[0]*SCALE,pos[1]*SCALE))
     screen.blit(image,rect)
 
 
-def setup():
+def setup() -> tuple[ButtonGroup,
+                    ButtonGroup,BoxGroup,DefaultGroup,
+                    ButtonGroup,BoxGroup,DefaultGroup,
+                    ButtonGroup,BoxGroup,DefaultGroup,
+                    ButtonGroup,
+                    ButtonGroup,DefaultGroup,
+                    ButtonGroup,BoxGroup]:
+
     # Make all the parts for the Menu
     menuButtons = ButtonGroup()
     Button((460,50),2,"Creature Creator","Creature Creator",(255,255,255),(0,0,0),(250,50),menuButtons)
@@ -379,10 +413,26 @@ def setup():
     fileFinderButtons.append(ButtonGroup())
     Button((190,50),2,"Previous","Previous",(255,255,255),(0,0,0),(595,850),fileFinderButtons[2])
 
-    return menuButtons, creatureCreatorButtons, creatureCreatorBox, creatureCreatorDefault, environmentCreatorButtons, environmentCreatorBox, environmentCreatorDefault, simulationCreatorButtons, simulationCreatorBox, simulationCreatorDefault, textEditorButtons, confirmButtons, confirmDefault, fileFinderButtons, fileFinderBox
+    return (
+        menuButtons, 
+        creatureCreatorButtons, 
+        creatureCreatorBox, 
+        creatureCreatorDefault, 
+        environmentCreatorButtons, 
+        environmentCreatorBox, 
+        environmentCreatorDefault, 
+        simulationCreatorButtons, 
+        simulationCreatorBox, 
+        simulationCreatorDefault, 
+        textEditorButtons, 
+        confirmButtons, 
+        confirmDefault, 
+        fileFinderButtons, 
+        fileFinderBox
+        )
 
 
-def Menu():
+def menu() -> None:
     print("Menu")
     # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
@@ -432,7 +482,7 @@ def Menu():
         time.sleep(1/ FPS)
     
 
-def CreatureCreator():
+def CreatureCreator() -> None:
     print("Creature Creator")
     # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
@@ -493,7 +543,7 @@ def CreatureCreator():
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def EnvironmentCreator():
+def EnvironmentCreator() -> None:
     print("Environment Creator")
     # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
@@ -548,7 +598,7 @@ def EnvironmentCreator():
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def SimulationCreator():
+def SimulationCreator() -> None:
     print("Simulation Creator")
     # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
@@ -603,7 +653,7 @@ def SimulationCreator():
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def FileFinder(valueType):
+def FileFinder(valueType: str) -> dict:
     print("File Finder")
     timeDelay = 0
     # Get names for buttons
@@ -700,7 +750,7 @@ def FileFinder(valueType):
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def NumEditor(number=""):
+def NumEditor(number: str="") -> str:
     print("Num Editor")
     numbers = str(number)
     # Small Delay before buttons activate to stop accidental clicks
@@ -759,7 +809,7 @@ def NumEditor(number=""):
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def TextEditor(text=""):
+def TextEditor(text: str="") -> str:
     print("Text Editor")
     # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
@@ -821,7 +871,7 @@ def TextEditor(text=""):
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def Confirm(buttonText = "Confirm",text = "auto"):
+def Confirm(buttonText: str="Confirm", text: str="auto") -> bool:
     print("Confirm")
     # Small Delay before buttons activate to stop accidental clicks
     if text == "auto":
@@ -866,7 +916,7 @@ def Confirm(buttonText = "Confirm",text = "auto"):
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def SaveFile(name,type,dictionary):
+def SaveFile(name: str, type: str, dictionary: dict) -> None:
     fileSaved = False
     fileOpen = False
     try:
@@ -897,7 +947,7 @@ def SaveFile(name,type,dictionary):
         # display message that file has not been saved
         message("File has not been saved")
 
-def LoadFile(name,type):
+def LoadFile(name: str, type: str) -> dict:
     try:
         # try to open file
         file = open(f"assets/{type}/{name}.txt","r")
@@ -921,7 +971,7 @@ def LoadFile(name,type):
     message(f"File {name} loaded")
     return dictionary
 
-def folderRead(folder):
+def folderRead(folder: str) -> list:
     names = [[]]
     files = os.listdir(folder)
     files.sort()
@@ -931,16 +981,16 @@ def folderRead(folder):
         else:
             names.append([])
             names[len(names)-1].append(file[:-4])
-    return(names)
+    return names
 
-def deleteFile(folder,name):
+def deleteFile(folder: str, name: str) -> None:
     try:
         open(f"assets/{folder}/{name}.txt","r")
         os.remove(f"assets/{folder}/{name}.txt")
     except:
         message("File could not be deleted")
 
-def message(text, length = 800,timeDelay = 1):
+def message(text: str, length: int=800, timeDelay: int=1) -> None:
     SpriteRender((length,50),(255,255,255),(800,450),screen)
     TextRender(text,2,(0,0,0),(800,450),screen)
     pg.display.flip()
@@ -963,8 +1013,9 @@ running = True
 
 
 menuButtons, creatureCreatorButtons, creatureCreatorBox, creatureCreatorDefault, environmentCreatorButtons, environmentCreatorBox, environmentCreatorDefault, simulationCreatorButtons, simulationCreatorBox, simulationCreatorDefault, textEditorButtons, confirmButtons, confirmDefault, fileFinderButtons, fileFinderBox = setup()
+
 while running:
-    Menu()
+    menu()
     print("???")
     clock.tick()
     pg.display.flip()
