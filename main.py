@@ -1,4 +1,7 @@
-import sys, time, pyautogui, os
+import sys
+import time
+import pyautogui
+import os
 import pygame as pg
 
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
