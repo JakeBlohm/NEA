@@ -25,7 +25,7 @@ viewDisMod = 10
 viewAngleMod = 5
 childCostMod = 100
 
-foodPerCycle = 0.1
+foodPerCycle = 1
 foodValue = 100
 
 speedDrain = 0.01
@@ -42,11 +42,12 @@ startingFood = 100
 startingHealth = 100
 
 childCost = 100
-amountOfFood = 100
-amountOfAnimals = 1000
+amountOfFood = 1000
+amountOfAnimals = 10
 TITLE = 'Evolution'
 
-animals = [["test",amountOfAnimals,[[startSpeed,speedMod,speedDrain],[startRotSpeed,rotSpeedMod,rotSpeedDrain],[startViewDis,viewDisMod,viewDisDrain],[startViewAngle,viewAngleMod,viewAngleDrain],[childCost,childCostMod]]]]
+animals = [["test",amountOfAnimals,[[startSpeed,speedMod],[startRotSpeed,rotSpeedMod],[startViewDis,viewDisMod],[startViewAngle,viewAngleMod],[childCost,childCostMod]]]]
+enviroConditions = [0.01,0.01,0.001,0.005]
 
 class AnimalGroup(pg.sprite.Group):
     def update(self,foods):
@@ -58,7 +59,7 @@ class AnimalGroup(pg.sprite.Group):
         childCosts = []
         animals = self.sprites()
         for animal in animals:
-            traits = animal.move(foods)
+            traits = animal.update(foods)
             Speeds.append(traits[0])
             veiwDiss.append(traits[1])
             veiwAngles.append(traits[2])
@@ -68,29 +69,25 @@ class AnimalGroup(pg.sprite.Group):
         return Speeds, pop, veiwDiss ,veiwAngles, foodAmount, childCosts
 
 class Animal(pg.sprite.Sprite):
-    def __init__(self, group,screen, pos, stats):
+    def __init__(self, group,screen, pos, stats, enviroConditions):
        # Call the parent class (Sprite) constructor
        pg.sprite.Sprite.__init__(self)
 
        # unpack data from stats
        # traits
-       self.stats = stats
        self.speed = self.evolve(stats[0][0],stats[0][1],0)
-       self.stats[0][0] = self.speed
-       self.rotSpeed = self.evolve(stats[1][0],stats[1][1],0)
-       self.stats[1][0] = self.rotSpeed
-       self.viewDis = self.evolve(stats[2][0],stats[2][1],0)
-       self.stats[2][0] = self.viewDis
-       self.viewAngle = self.evolve(stats[3][0],stats[3][1],0)
-       self.stats[3][0] = self.viewAngle
-       self.childCost = self.evolve(stats[4][0],stats[4][1],10)
-       self.stats[4][0] = self.childCost
-       print(self.stats[4])
+       self.agility = self.evolve(stats[1][0],stats[1][1],0)
+       self.sight = self.evolve(stats[2][0],stats[2][1],0)
+       self.fov = self.evolve(stats[3][0],stats[3][1],0)
+       self.size = self.evolve(stats[4][0],stats[4][1],10)
+       
+       self.stats = [[self.speed,stats[0][1]],[self.agility,stats[1][1]],[self.sight,stats[2][1]],[self.fov,stats[3][1]],[self.size,stats[4][1]]]
+       self.enviroConditions = enviroConditions
 
        # Create an image of the block, and fill it with a color.
        # This could also be an image loaded from the disk.
-       self.size = (self.childCost/10)*SIZE_SCALE
-       self.image = pg.Surface([self.size, self.size])
+       spriteSize = (self.size/10)*SIZE_SCALE
+       self.image = pg.Surface([spriteSize, spriteSize])
        if self.speed*20 < 255:
         self.image.fill((0,0,self.speed*20))
        else:
@@ -99,22 +96,24 @@ class Animal(pg.sprite.Sprite):
        # Fetch the rectangle object that has the dimensions of the image
        # Update the position of this object by setting the values of rect.x and rect.y
        self.rect = self.image.get_rect(center = pos)
-       self.radius = self.image.get_height()/2
+       self.radius = spriteSize/2
+
        self.group = group
        group.add(self)
        
        self.cycle = 0
        self.foundTarget = False
+       # sets the spawn bearing to a random number
        bearing = random.randint(0,360)
        self.vector = pg.math.Vector2(1,0).rotate(bearing)
        self.screen = screen
        
 
-       self.foodDrain = (self.speed*stats[0][2])+(self.rotSpeed*stats[1][2])+(self.viewDis*stats[2][2])+(self.viewAngle*stats[3][2])
+       self.foodDrain = (self.speed*enviroConditions[0])+(self.agility*enviroConditions[1])+(self.sight*enviroConditions[2])+(self.fov*enviroConditions[3])
 
        # stats
-       self.food = self.childCost/2
-       self.health = startingHealth
+       self.food = self.size/2
+       self.health = self.size
        self.pos = pos
 
     def evolve(self,trait,traitMod,traitMin=1):
@@ -124,13 +123,13 @@ class Animal(pg.sprite.Sprite):
         return trait
     
     def createChild(self):
-        Animal(self.group,self.screen, self.pos,self.stats)
+        Animal(self.group,self.screen, self.pos,self.stats,self.enviroConditions)
 
     def lookFor(self, targets):
         self.foundTarget = False
         self.targetDistance = 0
 
-        viewDis = self.viewDis*SCALE
+        viewDis = self.sight*SCALE
         position = self.rect.center
 
         high = [position[0] + viewDis, position[1] + viewDis]
@@ -142,7 +141,7 @@ class Animal(pg.sprite.Sprite):
                 targetVector = pg.math.Vector2(targetPos[0] - position[0],targetPos[1] - position[1])
                 distance = targetVector.magnitude()
                 angle = self.vector.angle_to(targetVector)
-                if -self.viewAngle < angle < self.viewAngle:
+                if -self.fov < angle < self.fov and viewDis > distance:
                     if self.foundTarget == False or self.targetDistance > distance:
                         self.targetDistance = distance
                         self.targetAngle = angle
@@ -151,53 +150,74 @@ class Animal(pg.sprite.Sprite):
                         
     def locateTarget(self,target):
         self.foundTarget = False
-        viewDis = self.viewDis*SCALE
+        viewDis = self.sight*SCALE
         position = self.rect.center
 
-        high = [position[0] + viewDis, position[1] + viewDis]
-        low = [position[0] - viewDis, position[1] - viewDis]
-
         targetPos = target.rect.center
-        if low[0] < targetPos[0] < high[0] and low[1] < targetPos[1] < high[1]:
-            targetVector = pg.math.Vector2(targetPos[0] - position[0],targetPos[1] - position[1])
-            distance = targetVector.magnitude()
-            angle = self.vector.angle_to(targetVector)
-            if -self.viewAngle < angle < self.viewAngle:
-                self.targetDistance = distance
-                self.targetAngle = angle
-                self.foundTarget = True
+        targetVector = pg.math.Vector2(targetPos[0] - position[0],targetPos[1] - position[1])
+        distance = targetVector.magnitude()
+        angle = self.vector.angle_to(targetVector)
+        if -self.fov < angle < self.fov and viewDis > distance:
+            self.targetDistance = distance
+            self.targetAngle = angle
+            self.foundTarget = True
 
-    def move(self, foods):
+    def update(self, foods):
         self.food -= self.foodDrain
         self.cycle += 1
-        if self.food < 0:
+
+        if self.food <= 0:
+            self.health -= 0.5
+            self.food = 0
+
+            if self.speed*20 < 255 and self.health > 0:
+                self.image.fill((255-(255*(self.health/self.size)),0,self.speed*20))
+            else:
+                self.image.fill((255-(255*(self.health/self.size)),0,255))
+        elif self.food > self.size /4 and self.health < self.size:
+            self.food -= 0.5
+            self.health += 0.5
+            if self.health > self.size:
+                self.health = self.size
+
+            if self.speed*20 < 255:
+                self.image.fill((255-(255*(self.health/self.size)),0,self.speed*20))
+            else:
+                self.image.fill((255-(255*(self.health/self.size)),0,255))
+
+        if self.health <= 0:
             self.kill()
         
-        if self.foundTarget == True:
-            if self.cycle % 10 == 0:
+        if len(foods) != 0 :
+            if self.foundTarget == True:
+                if self.cycle % 5 == 0:
+                    self.lookFor(foods)
+                else:
+                    self.locateTarget(self.target)
+            elif self.cycle % 20 == 0:
                 self.lookFor(foods)
-            else:
-                self.locateTarget(self.target)
-        elif self.cycle % 50 == 0:
-            self.lookFor(foods)
 
-        if self.foundTarget:
-            # Target or eat the targeted food
-            if self.targetDistance < self.radius + self.target.radius:
-                self.targetValue = self.target.eat()
-                if self.targetValue > 0:
-                    self.food += self.targetValue
-                self.foundTarget = False
-            if self.targetAngle < 0:
-                if abs(self.targetAngle) > self.rotSpeed:
-                    self.vector.rotate_ip(-self.rotSpeed)
-            elif self.targetAngle > 0:
-                if abs(self.targetAngle) > self.rotSpeed:
-                    self.vector.rotate_ip(self.rotSpeed)
+            if self.foundTarget:
+                # Target or eat the targeted food
+                if self.targetDistance < self.radius + self.target.radius:
+                    self.targetValue = self.target.eat()
+                    if self.targetValue > 0:
+                        self.food += self.targetValue
+                    self.foundTarget = False
+                if self.targetAngle < 0:
+                    if abs(self.targetAngle) > self.agility:
+                        self.vector.rotate_ip(-self.agility)
+                elif self.targetAngle > 0:
+                    if abs(self.targetAngle) > self.agility:
+                        self.vector.rotate_ip(self.agility)
+            else:
+                # Move randomly if there is no target
+                self.vector.rotate_ip(random.randint(-self.agility,self.agility))
         else:
             # Move randomly if there is no target
-            self.vector.rotate_ip(random.randint(-self.rotSpeed,self.rotSpeed))
+            self.vector.rotate_ip(random.randint(-self.agility,self.agility))
         
+
         
         self.pos = (self.pos[0]+self.vector.x*self.speed,self.pos[1]+self.vector.y*self.speed)
 
@@ -213,18 +233,18 @@ class Animal(pg.sprite.Sprite):
         self.rect.center = self.pos
         
         # Tests if it has enouge food to reproduce
-        if self.food > self.childCost * 1.5:
+        if self.food > self.size * 1.5:
             self.createChild()
-            self.food -= self.childCost
+            self.food -= self.size
         
         # Draws lines showing where it is looking/targeting
         if self.foundTarget:
             pg.draw.line(self.screen,(255,0,0),self.rect.center,self.target.rect.center)
         else:
-            pg.draw.line(self.screen,(0,125,0),self.rect.center,(self.vector.x*self.viewDis+self.pos[0],self.vector.y*self.viewDis+self.pos[1]))
+            pg.draw.line(self.screen,(0,125,0),self.rect.center,(self.vector.x*self.sight+self.pos[0],self.vector.y*self.sight+self.pos[1]))
             
 
-        return self.speed, self.viewDis, self.viewAngle, self.food, self.childCost
+        return self.speed, self.sight, self.fov, self.food, self.size
         #self.createChild()
 
 class FoodGroup(pg.sprite.Group):
@@ -268,7 +288,7 @@ class Food(pg.sprite.Sprite):
         return tempValue
 
 class Game:
-    def __init__(self,animals):
+    def __init__(self,animals,enviroConditions):
         print("Seting Up")
         # General setup
         pg.init()
@@ -288,7 +308,7 @@ class Game:
             animalGroup = AnimalGroup()
             self.animals.append(animalGroup)
             for i in range(0,amountOfAnimals):
-                Animal(animalGroup,self.screen, (random.randint(0,SCREEN_WIDTH),random.randint(0,SCREEN_HEIGHT)),stats)
+                Animal(animalGroup,self.screen, (random.randint(0,SCREEN_WIDTH),random.randint(0,SCREEN_HEIGHT)),stats,enviroConditions)
 
         for i in range(0,amountOfFood):
             Food(self.foods,foodValue)
@@ -340,7 +360,7 @@ class Game:
             b= round(sum(self.childCost) / self.pop)
             self.foodAmount.sort()
             c = round(self.foodAmount[0],1)
-            self.displayNum((0*SCALE, 25*SCALE),self.pop,'white')
+            self.displayNum((0*SCALE, 25*SCALE),self.pop,'green')
             self.displayNum((0*SCALE, 50*SCALE),a,'white')
             self.displayNum((50*SCALE, 50*SCALE),c,'white')
             self.displayNum((0*SCALE, 75*SCALE),b,'white')
@@ -349,5 +369,5 @@ class Game:
             pg.display.flip()
             #time.sleep(0.05)
 
-game = Game(animals)
+game = Game(animals,enviroConditions)
 game.run()
