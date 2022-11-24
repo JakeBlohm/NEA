@@ -6,32 +6,45 @@ import pygame as pg
 
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
 print(pyautogui.size())
-SCALE =SCREEN_WIDTH
-
-SCALE = SCALE/1600
+SCALE = SCREEN_WIDTH / 1600
 print(SCALE)
 FPS = 10
+LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
-    # A group that can control multiple buttons
 class ButtonGroup(pg.sprite.Group):
+    """A group of Buttons"""
     def update(self, mousePos: tuple) -> list:
+        """Gets a list of all buttons pressed within the ButtonGroup
+        
+        Returns:
+            [Button.name, Button.name, ...] list of all button names pressed."""
         pressed = []
         buttons = self.sprites()
         for button in buttons:
             pressed.append(button.update(mousePos))
         return pressed
 
-    def draw(self, screen) -> None:
+    def draw(self, screen: pg.Surface) -> None:
+        """Draws all buttons within the ButtonGroup"""
         buttons = self.sprites()
         for button in buttons:
             button.draw(screen)
         
-    def setText(self, data) -> None:
+    def setText(self, data: dict) -> None:
+        """Sets text of all buttons within the ButtonGroup"""
         buttons = self.sprites()
         for button in buttons:
             button.setText(data)
 
+
 class Button(pg.sprite.Sprite):
+    """A pressable button
+    
+    Takes:
+        size: tuple(int,int), textSize: int, screenText: str, name: str,
+        colour: tuple(int,int.int), textColour: tuple(int,int,int),
+        pos: tuple(int,int), group: ButtonGroup"""
+
     def __init__(self, size: tuple[int,int],
                 textSize: int, screenText: str, 
                 name: str, colour: tuple[int,int,int],
@@ -58,6 +71,10 @@ class Button(pg.sprite.Sprite):
         self.highlight = False
 
     def update(self, mousePos: tuple[int,int]) -> str:
+        """Highlights button on mouse over, returns name when clicked.
+        
+        Returns:
+            Button.name: string"""
         # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
@@ -73,14 +90,17 @@ class Button(pg.sprite.Sprite):
             self.highlight = False
 
     def draw(self, screen: pg.Surface) -> None:
+        """Draws the Button to the passed screen"""
         # display the button then text
         screen.blit(self.image,self.rect)
         screen.blit(self.text,self.rect)
     
     def setText(self, data: dict) -> None:
+        """Sets the text of the button to keyed data in a passed dict"""
         if self.name in data:
             self.screenText = data[self.name]
             self.text = self.font.render(self.screenText, 0, pg.Color(self.textColour))
+
 
 class BoxGroup(pg.sprite.Group):
     def update(self, mousePos: tuple[int,int]) -> float:
@@ -107,6 +127,7 @@ class BoxGroup(pg.sprite.Group):
         boxes = self.sprites()
         for box in boxes:
             box.setValue(data)
+
 
 class TextBox(pg.sprite.Sprite):
     def __init__(self, size: tuple[int,int], 
@@ -179,6 +200,7 @@ class TextBox(pg.sprite.Sprite):
             self.value = data[self.name]
             self.text = self.font.render(self.value, 0, pg.Color(self.textColour))
 
+
 class TickBox(pg.sprite.Sprite):
     def __init__(self, size: tuple[int,int], 
                 textSize: tuple[int,int], startValue: bool, 
@@ -238,6 +260,7 @@ class TickBox(pg.sprite.Sprite):
         if self.name in data:
             self.value = data[self.name]
 
+
 class DefaultGroup(pg.sprite.Group):
     def draw(self, screen: pg.Surface) -> None:
         sprites = self.sprites()
@@ -248,6 +271,7 @@ class DefaultGroup(pg.sprite.Group):
         sprites = self.sprites()
         for sprite in sprites:
             sprite.setText(data)
+
 
 class Text(pg.sprite.Sprite):
     def __init__(self, textSize: tuple[int,int], 
@@ -295,6 +319,7 @@ class Text(pg.sprite.Sprite):
             text = data[self.name]
             self.text = self.font.render(text, 0, pg.Color(self.textColour))
     
+
 def TextRender(text: str, scale: float, 
                 colour: tuple[int,int,int], pos: tuple[int,int], 
                 screen: pg.Surface) -> None:
@@ -311,7 +336,6 @@ def SpriteRender(size: tuple[int,int], colour: tuple[int,int,int],
     image.fill(colour)
     rect = image.get_rect(center = (pos[0]*SCALE,pos[1]*SCALE))
     screen.blit(image,rect)
-
 
 def setup() -> tuple[ButtonGroup,
                     ButtonGroup,BoxGroup,DefaultGroup,
@@ -431,7 +455,6 @@ def setup() -> tuple[ButtonGroup,
         fileFinderBox
         )
 
-
 def menu() -> None:
     print("Menu")
     # Small Delay before buttons activate to stop accidental clicks
@@ -481,7 +504,6 @@ def menu() -> None:
         # run menu at 60 fps
         time.sleep(1/ FPS)
     
-
 def CreatureCreator() -> None:
     print("Creature Creator")
     # Small Delay before buttons activate to stop accidental clicks
@@ -999,20 +1021,22 @@ def message(text: str, length: int=800, timeDelay: int=1) -> None:
 print("Seting Up")
 # General setup
 pg.init()
-LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 screen = pg.display.set_mode((0,0),pg.FULLSCREEN, display=0)
 pg.display.set_caption("NEA")
 clock = pg.time.Clock()
 running = True
 
-
-
-
 # Menu Settup
 
-
-
-menuButtons, creatureCreatorButtons, creatureCreatorBox, creatureCreatorDefault, environmentCreatorButtons, environmentCreatorBox, environmentCreatorDefault, simulationCreatorButtons, simulationCreatorBox, simulationCreatorDefault, textEditorButtons, confirmButtons, confirmDefault, fileFinderButtons, fileFinderBox = setup()
+(
+    menuButtons, creatureCreatorButtons, 
+    creatureCreatorBox, creatureCreatorDefault, 
+    environmentCreatorButtons, environmentCreatorBox, 
+    environmentCreatorDefault, simulationCreatorButtons, 
+    simulationCreatorBox, simulationCreatorDefault, 
+    textEditorButtons, confirmButtons, 
+    confirmDefault, fileFinderButtons,
+    fileFinderBox) = setup()
 
 while running:
     menu()
