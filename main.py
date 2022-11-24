@@ -1,36 +1,58 @@
-import sys, time, pyautogui, os
+import sys
+import time
+import pyautogui
+import os
 import pygame as pg
 
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
 print(pyautogui.size())
-SCALE =SCREEN_WIDTH
-
-SCALE = SCALE/1600
+SCALE = SCREEN_WIDTH / 1600
 print(SCALE)
 FPS = 10
+LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
-    # A group that can controll multiple buttions
 class ButtonGroup(pg.sprite.Group):
-    def update(self,mousePos):
-        pressed = []
-        buttions = self.sprites()
-        for buttion in buttions:
-            pressed.append(buttion.update(mousePos))
-        return pressed
-    def draw(self, screen):
-        Buttions = self.sprites()
-        for Buttion in Buttions:
-            Buttion.draw(screen)
+    """A group of Buttons"""
+    def update(self, mousePos: tuple) -> list:
+        """Gets a list of all buttons pressed within the ButtonGroup
         
-    def setText(self,data):
-        Buttions = self.sprites()
-        for Buttion in Buttions:
-            Buttion.setText(data)
+        Returns:
+            [Button.name, Button.name, ...] list of all button names pressed."""
+        pressed = []
+        buttons = self.sprites()
+        for button in buttons:
+            pressed.append(button.update(mousePos))
+        return pressed
+
+    def draw(self, screen: pg.Surface) -> None:
+        """Draws all buttons within the ButtonGroup"""
+        buttons = self.sprites()
+        for button in buttons:
+            button.draw(screen)
+        
+    def setText(self, data: dict) -> None:
+        """Sets text of all buttons within the ButtonGroup"""
+        buttons = self.sprites()
+        for button in buttons:
+            button.setText(data)
+
 
 class Button(pg.sprite.Sprite):
-    def __init__(self,size,textSize,screenText,name,colour, textColour,pos,group):
-        print("Creating Buttion")
-        # Create Buttion
+    """A pressable button
+    
+    Takes:
+        size: tuple(int,int), textSize: int, screenText: str, name: str,
+        colour: tuple(int,int.int), textColour: tuple(int,int,int),
+        pos: tuple(int,int), group: ButtonGroup"""
+
+    def __init__(self, size: tuple[int,int],
+                textSize: int, screenText: str, 
+                name: str, colour: tuple[int,int,int],
+                textColour: tuple[int,int,int], 
+                pos: tuple[int,int], group: ButtonGroup) -> None:
+
+        print("Creating button")
+        # Create button
         pg.sprite.Sprite.__init__(self)
         self.image = pg.Surface([size[0]*SCALE, size[1]*SCALE])
         self.image.fill(colour)
@@ -48,13 +70,17 @@ class Button(pg.sprite.Sprite):
         self.colour = colour
         self.highlight = False
 
-    def update(self,mousePos):
-        # detect if the mouse is on the buttion
+    def update(self, mousePos: tuple[int,int]) -> str:
+        """Highlights button on mouse over, returns name when clicked.
+        
+        Returns:
+            Button.name: string"""
+        # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
             self.image.fill((self.colour[0]-50,self.colour[1]-50,self.colour[2]-50))
             self.highlight = True
-            # detect when the mouse buttion is pressed
+            # detect when the mouse button is pressed
             if pg.mouse.get_pressed() == (True,False,False):
                 return self.name
 
@@ -63,44 +89,54 @@ class Button(pg.sprite.Sprite):
             self.image.fill(self.colour)
             self.highlight = False
 
-    def draw(self,screen):
-        # display the buttion then text
+    def draw(self, screen: pg.Surface) -> None:
+        """Draws the Button to the passed screen"""
+        # display the button then text
         screen.blit(self.image,self.rect)
         screen.blit(self.text,self.rect)
     
-    def setText(self,data):
+    def setText(self, data: dict) -> None:
+        """Sets the text of the button to keyed data in a passed dict"""
         if self.name in data:
             self.screenText = data[self.name]
             self.text = self.font.render(self.screenText, 0, pg.Color(self.textColour))
 
+
 class BoxGroup(pg.sprite.Group):
-    def update(self,mousePos):
+    def update(self, mousePos: tuple[int,int]) -> float:
         clicked = 0
         boxes = self.sprites()
         for box in boxes:
             clicked += box.update(mousePos)
         return clicked
 
-    def draw(self, screen):
+    def draw(self, screen: pg.Surface) -> None:
         boxes = self.sprites()
         for box in boxes:
             box.draw(screen)
 
-    def getValues(self):
+    def getValues(self) -> dict:
         dictionary = {}
         boxes = self.sprites()
         for box in boxes:
             name,value=(box.getValue())
             dictionary[name] = value
-        return(dictionary)
+        return dictionary
 
-    def setValues(self,data):
+    def setValues(self, data: dict) -> None:
         boxes = self.sprites()
         for box in boxes:
             box.setValue(data)
 
+
 class TextBox(pg.sprite.Sprite):
-    def __init__(self,size,textSize,startValue,name,valueType,colour, textColour,pos,group,deleteValueOnClick = False):
+    def __init__(self, size: tuple[int,int], 
+                textSize: tuple[int,int], startValue: str, 
+                name: str, valueType: str,
+                colour: tuple[int,int,int], textColour: tuple[int,int,int], 
+                pos: tuple[int,int], group: BoxGroup, 
+                deleteValueOnClick: bool=False) -> None:
+
         print("Creating TextBox")
         # Create TextBox
         pg.sprite.Sprite.__init__(self)
@@ -122,13 +158,13 @@ class TextBox(pg.sprite.Sprite):
         self.textColour = textColour
         self.highlight = False
     
-    def update(self,mousePos):
-        # detect if the mouse is on the buttion
+    def update(self, mousePos: tuple[int,int]) -> float:
+        # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
             self.image.fill((self.colour[0]-50,self.colour[1]-50,self.colour[2]-50))
             self.highlight = True
-            # detect when the mouse buttion is pressed
+            # detect when the mouse button is pressed
             if pg.mouse.get_pressed() == (True,False,False):
                 if self.valueType == "Number":
                     if self.deleteValue:
@@ -149,23 +185,29 @@ class TextBox(pg.sprite.Sprite):
             # remove highlight effect
             self.image.fill(self.colour)
             self.highlight = False
-        return 0
+        return 0.0
 
-    def draw(self,screen):
-        # display the buttion then text
+    def draw(self, screen: pg.Surface) -> None:
+        # display the button then text
         screen.blit(self.image,self.rect)
         screen.blit(self.text,self.rect)
     
-    def getValue(self):
-        return self.name,self.value
+    def getValue(self) -> tuple[str, int]:
+        return self.name, self.value
     
-    def setValue(self,data):
+    def setValue(self, data: dict) -> None:
         if self.name in data:
             self.value = data[self.name]
             self.text = self.font.render(self.value, 0, pg.Color(self.textColour))
 
+
 class TickBox(pg.sprite.Sprite):
-    def __init__(self,size,textSize,startValue,name,colour,textColour,pos,group):
+    def __init__(self, size: tuple[int,int], 
+                textSize: tuple[int,int], startValue: bool, 
+                name: str, colour: tuple[int,int,int],
+                textColour: tuple[int,int,int], pos: tuple[int,int], 
+                group: BoxGroup) -> None:
+
         print("Creating TextBox")
         # Create TickBox
         pg.sprite.Sprite.__init__(self)
@@ -187,13 +229,13 @@ class TickBox(pg.sprite.Sprite):
         self.value = startValue
         self.highlight = False
     
-    def update(self,mousePos):
-        # detect if the mouse is on the buttion
+    def update(self, mousePos: tuple[int,int]) -> float:
+        # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
             self.image.fill((self.textColour[0]-50,self.textColour[1]-50,self.textColour[2]-50))
             self.highlight = True
-            # detect when the mouse buttion is pressed
+            # detect when the mouse button is pressed
             if pg.mouse.get_pressed() == (True,False,False):
                 self.value = not self.value
                 return 0.3
@@ -202,24 +244,25 @@ class TickBox(pg.sprite.Sprite):
             # remove highlight effect
             self.image.fill(self.textColour)
             self.highlight = False
-        return 0
+        return 0.0
 
-    def draw(self,screen):
-        # display the buttion then text
+    def draw(self, screen: pg.Surface) -> None:
+        # display the button then text
         screen.blit(self.image,self.rect)
         if self.value:
             screen.blit(self.cutout,self.rectCutout)
         screen.blit(self.text,self.pos)
     
-    def getValue(self):
-        return self.name,self.value
+    def getValue(self) -> tuple[str, int]:
+        return self.name, self.value
     
-    def setValue(self,data):
+    def setValue(self, data: dict) -> None:
         if self.name in data:
             self.value = data[self.name]
+
 
 class MultiBox(pg.sprite.Sprite):
-    def __init__(self,size,textSize,startValue,name,colour,textColour,pos,group):
+    def __init__(self,size,textSize,startValue,name,colour,textColour,pos,group) -> None:
         print("Creating TextBox")
         # Create TickBox
         pg.sprite.Sprite.__init__(self)
@@ -272,20 +315,28 @@ class MultiBox(pg.sprite.Sprite):
         if self.name in data:
             self.value = data[self.name]
 
+
 class DefaultGroup(pg.sprite.Group):
-    def draw(self,screen):
+    def draw(self, screen: pg.Surface) -> None:
         sprites = self.sprites()
         for sprite in sprites:
             sprite.draw(screen)
-    def setText(self,data):
+
+    def setText(self, data: dict) -> None:
         sprites = self.sprites()
         for sprite in sprites:
             sprite.setText(data)
 
+
 class Text(pg.sprite.Sprite):
-    def __init__(self,textSize,text,textColour,pos,group,size = None,colour = None, alignment = "center", name = None):
+    def __init__(self, textSize: tuple[int,int], 
+                text: str, textColour : tuple[int,int,int], 
+                pos: tuple[int,int], group: DefaultGroup,
+                size: int=None, colour: tuple[int,int,int]=None,
+                alignment: str="center", name: str=None) -> None:
+
         print("Creating Text")
-        # Create Buttion
+        # Create button
         pg.sprite.Sprite.__init__(self)
         if size != None:
             self.image = pg.Surface([size[0]*SCALE, size[1]*SCALE])
@@ -312,31 +363,43 @@ class Text(pg.sprite.Sprite):
         group = group
         group.add(self)
 
-    def draw(self,screen):
-        # display the buttion then text
+    def draw(self, screen: pg.Surface) -> None:
+        # display the button then text
         if self.backround:
             screen.blit(self.image,self.rect)
         screen.blit(self.text,self.rect)
     
-    def setText(self,data):
+    def setText(self, data: dict) -> None:
         if self.name in data:
             text = data[self.name]
             self.text = self.font.render(text, 0, pg.Color(self.textColour))
     
-def TextRender(text,scale,colour,pos,screen):
+
+def TextRender(text: str, scale: float, 
+                colour: tuple[int,int,int], pos: tuple[int,int], 
+                screen: pg.Surface) -> None:
+
     font = pg.font.SysFont('Arial', int(24*SCALE*scale))
     text = font.render(text, 0, pg.Color(colour))
     rect = text.get_rect(center = (pos[0]*SCALE,pos[1]*SCALE))
     screen.blit(text,rect)
 
-def SpriteRender(size,colour,pos,screen):
+def SpriteRender(size: tuple[int,int], colour: tuple[int,int,int], 
+                pos: tuple[int,int], screen: pg.Surface) -> None:
+
     image = pg.Surface([size[0]*SCALE, size[1]*SCALE])
     image.fill(colour)
     rect = image.get_rect(center = (pos[0]*SCALE,pos[1]*SCALE))
     screen.blit(image,rect)
 
+def setup() -> tuple[ButtonGroup,
+                    ButtonGroup,BoxGroup,DefaultGroup,
+                    ButtonGroup,BoxGroup,DefaultGroup,
+                    ButtonGroup,BoxGroup,DefaultGroup,
+                    ButtonGroup,
+                    ButtonGroup,DefaultGroup,
+                    ButtonGroup,BoxGroup]:
 
-def setup():
     # Make all the parts for the Menu
     menuButtons = ButtonGroup()
     Button((460,50),2,"Creature Creator","Creature Creator",(255,255,255),(0,0,0),(250,50),menuButtons)
@@ -425,24 +488,39 @@ def setup():
     Button((600,50),2,"",11,(255,255,255),(0,0,0),(800,750),fileFinderButtons[0])
     fileFinderBox = BoxGroup()
     TextBox((600,50),2,"Search for file","File","Text",(255,255,255),(0,0,0),(800,100),fileFinderBox,True)
-    # buttions that can be activated
+    # buttons that can be activated
     fileFinderButtons.append(ButtonGroup())
     Button((100,50),2,"Next","Next",(255,255,255),(0,0,0),(1050,850),fileFinderButtons[1])
     fileFinderButtons.append(ButtonGroup())
     Button((190,50),2,"Previous","Previous",(255,255,255),(0,0,0),(595,850),fileFinderButtons[2])
 
-    return menuButtons, creatureCreatorButtons, creatureCreatorBox, creatureCreatorDefault, environmentCreatorButtons, environmentCreatorBox, environmentCreatorDefault, simulationCreatorButtons, simulationCreatorBox, simulationCreatorDefault, textEditorButtons, confirmButtons, confirmDefault, fileFinderButtons, fileFinderBox
+    return (
+        menuButtons, 
+        creatureCreatorButtons, 
+        creatureCreatorBox, 
+        creatureCreatorDefault, 
+        environmentCreatorButtons, 
+        environmentCreatorBox, 
+        environmentCreatorDefault, 
+        simulationCreatorButtons, 
+        simulationCreatorBox, 
+        simulationCreatorDefault, 
+        textEditorButtons, 
+        confirmButtons, 
+        confirmDefault, 
+        fileFinderButtons, 
+        fileFinderBox
+        )
 
-
-def Menu():
+def menu() -> None:
     print("Menu")
-    # Small Delay before buttions activate to stop accidental clicks
+    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     menuButtons.draw(screen)
     pg.display.flip()
     time.sleep(0.5)
     timeDelay = 0
-    # wait for buttion to be pressed
+    # wait for button to be pressed
     while running:
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
@@ -457,10 +535,10 @@ def Menu():
 
         pressed = menuButtons.update(mousePos) 
 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-            # Find what buttion was pressed
+            # Find what button was pressed
                 if press == "Creature Creator":
                     CreatureCreator()
                     timeDelay = 0.5
@@ -471,9 +549,9 @@ def Menu():
                     SimulationCreator()
                 
 
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
-        # display the buttions
+        # display the buttons
         menuButtons.draw(screen)
 
         pg.display.flip()
@@ -483,10 +561,9 @@ def Menu():
         # run menu at 60 fps
         time.sleep(1/ FPS)
     
-
-def CreatureCreator():
+def CreatureCreator() -> None:
     print("Creature Creator")
-    # Small Delay before buttions activate to stop accidental clicks
+    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     creatureCreatorButtons.draw(screen)
     creatureCreatorBox.draw(screen)
@@ -509,10 +586,10 @@ def CreatureCreator():
         pressed = creatureCreatorButtons.update(mousePos) 
         timeDelay = creatureCreatorBox.update(mousePos)
 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-                # Find what buttion was pressed
+                # Find what button was pressed
                 if press == "Exit":
                     return
                 elif press == "Save":
@@ -531,9 +608,9 @@ def CreatureCreator():
                         deleteFile("Creatures",name)
                     timeDelay = 0.5
 
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
-        # display the buttions
+        # display the buttons
         creatureCreatorButtons.draw(screen)
         creatureCreatorBox.draw(screen)
         creatureCreatorDefault.draw(screen)
@@ -545,9 +622,9 @@ def CreatureCreator():
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def EnvironmentCreator():
+def EnvironmentCreator() -> None:
     print("Environment Creator")
-    # Small Delay before buttions activate to stop accidental clicks
+    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     environmentCreatorButtons.draw(screen)
     environmentCreatorBox.draw(screen)
@@ -570,10 +647,10 @@ def EnvironmentCreator():
         pressed = environmentCreatorButtons.update(mousePos) 
         timeDelay = environmentCreatorBox.update(mousePos)
 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-                # Find what buttion was pressed
+                # Find what button was pressed
                 if press == "Exit":
                     return
                 elif press == "Save":
@@ -586,9 +663,9 @@ def EnvironmentCreator():
                         environmentCreatorBox.setValues(data)
                     timeDelay = 0.5
 
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
-        # display the buttions
+        # display the buttons
         environmentCreatorButtons.draw(screen)
         environmentCreatorBox.draw(screen)
         environmentCreatorDefault.draw(screen)
@@ -600,9 +677,9 @@ def EnvironmentCreator():
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def SimulationCreator():
+def SimulationCreator() -> None:
     print("Simulation Creator")
-    # Small Delay before buttions activate to stop accidental clicks
+    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     simulationCreatorButtons.draw(screen)
     simulationCreatorBox.draw(screen)
@@ -625,10 +702,10 @@ def SimulationCreator():
         pressed = simulationCreatorButtons.update(mousePos) 
         timeDelay = simulationCreatorBox.update(mousePos)
 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-                # Find what buttion was pressed
+                # Find what button was pressed
                 if press == "Exit":
                     return
                 elif press == "Save":
@@ -641,9 +718,9 @@ def SimulationCreator():
                         simulationCreatorBox.setValues(data)
                     timeDelay = 0.5
 
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
-        # display the buttions
+        # display the buttons
         simulationCreatorButtons.draw(screen)
         simulationCreatorBox.draw(screen)
         simulationCreatorDefault.draw(screen)
@@ -655,20 +732,20 @@ def SimulationCreator():
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def FileFinder(valueType):
+def FileFinder(valueType: str) -> dict:
     print("File Finder")
     timeDelay = 0
-    # Get names for buttions
-    fileNames = folderRead(f"Assets/{valueType}")
+    # Get names for buttons
+    fileNames = folderRead(f"assets/{valueType}")
     page = 0
     # convert the names from a list to a dict
-    buttionText = {}
+    buttonText = {}
     for i in range(len(fileNames[page])):
-        buttionText[i] = fileNames[page][i]
+        buttonText[i] = fileNames[page][i]
     amountOfPages = len(fileNames)-1
-    # change the buttion text to match
-    fileFinderButtons[0].setText(buttionText)
-    # Small Delay before buttions activate to stop accidental clicks
+    # change the button text to match
+    fileFinderButtons[0].setText(buttonText)
+    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     fileFinderButtons[0].draw(screen)
     fileFinderBox.draw(screen)
@@ -695,10 +772,10 @@ def FileFinder(valueType):
             pressed += fileFinderButtons[2].update(mousePos) 
         timeDelay = fileFinderBox.update(mousePos)
 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-                # Find what buttion was pressed
+                # Find what button was pressed
                 if press == "Back":
                     return None
                 elif press == "Load":
@@ -712,23 +789,23 @@ def FileFinder(valueType):
                     page += 1
                     for i in range(0,12):
                         if i < len(fileNames[page]):
-                            buttionText[i] = fileNames[page][i]
+                            buttonText[i] = fileNames[page][i]
                         else:
-                            buttionText[i] = ""
+                            buttonText[i] = ""
                     amountOfPages = len(fileNames)-1
-                    # change the buttion text to match
-                    fileFinderButtons[0].setText(buttionText)
+                    # change the button text to match
+                    fileFinderButtons[0].setText(buttonText)
                     timeDelay = 0.5
                 elif press == "Previous":
                     page -= 1
                     for i in range(0,12):
                         if i < len(fileNames[page]):
-                            buttionText[i] = fileNames[page][i]
+                            buttonText[i] = fileNames[page][i]
                         else:
-                            buttionText[i] = ""
+                            buttonText[i] = ""
                     amountOfPages = len(fileNames)-1
-                    # change the buttion text to match
-                    fileFinderButtons[0].setText(buttionText)
+                    # change the button text to match
+                    fileFinderButtons[0].setText(buttonText)
                     timeDelay = 0.5
                 else:
                     name = fileNames[page][press]
@@ -736,9 +813,9 @@ def FileFinder(valueType):
                     if data != None:
                         return data
 
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
-        # display the buttions
+        # display the buttons
         fileFinderButtons[0].draw(screen)
         fileFinderBox.draw(screen)
         if amountOfPages > page:
@@ -752,10 +829,10 @@ def FileFinder(valueType):
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def NumEditor(number=""):
+def NumEditor(number: str="") -> str:
     print("Num Editor")
     numbers = str(number)
-    # Small Delay before buttions activate to stop accidental clicks
+    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     SpriteRender((400,50),(255,255,255),(800,450),screen)
     TextRender(numbers,2,(0,0,0),(800,450),screen)
@@ -790,30 +867,30 @@ def NumEditor(number=""):
         mousePos=pg.mouse.get_pos()
 
         pressed = textEditorButtons.update(mousePos) 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-                # Find what buttion was pressed
+                # Find what button was pressed
                 if press == "Confirm":
                     return numbers
                 elif press == "Cancel":
                     return None
 
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
         # display numbers
         SpriteRender((400,50),(255,255,255),(800,450),screen)
         TextRender(numbers,2,(0,0,0),(800,450),screen)
-        # display the buttions
+        # display the buttons
         textEditorButtons.draw(screen)
 
         pg.display.flip()
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def TextEditor(text=""):
+def TextEditor(text: str="") -> str:
     print("Text Editor")
-    # Small Delay before buttions activate to stop accidental clicks
+    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     SpriteRender((600,50),(255,255,255),(800,450),screen)
     TextRender(text,2,(0,0,0),(800,450),screen)
@@ -852,33 +929,33 @@ def TextEditor(text=""):
         mousePos=pg.mouse.get_pos()
 
         pressed = textEditorButtons.update(mousePos) 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-                # Find what buttion was pressed
+                # Find what button was pressed
                 if press == "Confirm":
                     return text
                 elif press == "Cancel":
                     return None
         
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
         # display text
         SpriteRender((600,50),(255,255,255),(800,450),screen)
         TextRender(text,2,(0,0,0),(800,450),screen)
-        # display the buttions
+        # display the buttons
         textEditorButtons.draw(screen)
 
         pg.display.flip()
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def Confirm(buttionText = "Confirm",text = "auto"):
+def Confirm(buttonText: str="Confirm", text: str="auto") -> bool:
     print("Confirm")
-    # Small Delay before buttions activate to stop accidental clicks
+    # Small Delay before buttons activate to stop accidental clicks
     if text == "auto":
-        text = f"{buttionText}"
-    data = {"Confirm":buttionText,"Text":text}
+        text = f"{buttonText}"
+    data = {"Confirm":buttonText,"Text":text}
     confirmButtons.setText(data)
     confirmDefault.setText(data)
     screen.fill((0,0,0))
@@ -899,18 +976,18 @@ def Confirm(buttionText = "Confirm",text = "auto"):
         mousePos=pg.mouse.get_pos()
 
         pressed = confirmButtons.update(mousePos) 
-        # Detecting if there was a buttion pressed
+        # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
-                # Find what buttion was pressed
+                # Find what button was pressed
                 if press == "Confirm":
                     return True
                 elif press == "Cancel":
                     return False
         
-        # clear screen and set backround colour
+        # clear screen and set background colour
         screen.fill((0,0,0))
-        # display the buttions
+        # display the buttons
         confirmDefault.draw(screen)
         confirmButtons.draw(screen)
 
@@ -918,18 +995,18 @@ def Confirm(buttionText = "Confirm",text = "auto"):
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def SaveFile(name,type,dictionary):
+def SaveFile(name: str, type: str, dictionary: dict) -> None:
     fileSaved = False
     fileOpen = False
     try:
         # try and save file will error if there is a file with that name already
-        file = open(f"Assets/{type}/{name}.txt","x")
+        file = open(f"assets/{type}/{name}.txt","x")
         fileOpen = True
     except:
         # the file exists, asking user if they want to overwrite the data
         if Confirm("Overwrite","This file already exists"):
             # overwriting file
-            file = open(f"Assets/{type}/{name}.txt","w")
+            file = open(f"assets/{type}/{name}.txt","w")
             fileOpen = True
     
     if fileOpen:
@@ -949,10 +1026,10 @@ def SaveFile(name,type,dictionary):
         # display message that file has not been saved
         message("File has not been saved")
 
-def LoadFile(name,type):
+def LoadFile(name: str, type: str) -> dict:
     try:
         # try to open file
-        file = open(f"Assets/{type}/{name}.txt","r")
+        file = open(f"assets/{type}/{name}.txt","r")
         data = file.read()
         file.close()
     except:
@@ -973,7 +1050,7 @@ def LoadFile(name,type):
     message(f"File {name} loaded")
     return dictionary
 
-def folderRead(folder):
+def folderRead(folder: str) -> list:
     names = [[]]
     files = os.listdir(folder)
     files.sort()
@@ -983,16 +1060,16 @@ def folderRead(folder):
         else:
             names.append([])
             names[len(names)-1].append(file[:-4])
-    return(names)
+    return names
 
-def deleteFile(folder,name):
+def deleteFile(folder: str, name: str) -> None:
     try:
-        open(f"Assets/{folder}/{name}.txt","r")
-        os.remove(f"Assets/{folder}/{name}.txt")
+        open(f"assets/{folder}/{name}.txt","r")
+        os.remove(f"assets/{folder}/{name}.txt")
     except:
         message("File could not be deleted")
 
-def message(text, length = 800,timeDelay = 1):
+def message(text: str, length: int=800, timeDelay: int=1) -> None:
     SpriteRender((length,50),(255,255,255),(800,450),screen)
     TextRender(text,2,(0,0,0),(800,450),screen)
     pg.display.flip()
@@ -1001,22 +1078,25 @@ def message(text, length = 800,timeDelay = 1):
 print("Seting Up")
 # General setup
 pg.init()
-LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 screen = pg.display.set_mode((0,0),pg.FULLSCREEN, display=0)
 pg.display.set_caption("NEA")
 clock = pg.time.Clock()
 running = True
 
-
-
-
 # Menu Settup
 
+(
+    menuButtons, creatureCreatorButtons, 
+    creatureCreatorBox, creatureCreatorDefault, 
+    environmentCreatorButtons, environmentCreatorBox, 
+    environmentCreatorDefault, simulationCreatorButtons, 
+    simulationCreatorBox, simulationCreatorDefault, 
+    textEditorButtons, confirmButtons, 
+    confirmDefault, fileFinderButtons,
+    fileFinderBox) = setup()
 
-
-menuButtons, creatureCreatorButtons, creatureCreatorBox, creatureCreatorDefault, environmentCreatorButtons, environmentCreatorBox, environmentCreatorDefault, simulationCreatorButtons, simulationCreatorBox, simulationCreatorDefault, textEditorButtons, confirmButtons, confirmDefault, fileFinderButtons, fileFinderBox = setup()
 while running:
-    Menu()
+    menu()
     print("???")
     clock.tick()
     pg.display.flip()
