@@ -117,7 +117,7 @@ class Animal(pg.sprite.Sprite):
        self.pos = pos
 
     def evolve(self,trait,traitMod,traitMin=1):
-        trait += random.randint(-traitMod,traitMod)
+        trait += random.uniform(-traitMod,traitMod)
         if trait < traitMin:
             trait = traitMin
         return trait
@@ -171,9 +171,10 @@ class Animal(pg.sprite.Sprite):
             self.food = 0
 
             if self.speed*20 < 255 and self.health > 0:
-                self.image.fill((255-(255*(self.health/self.size)),0,self.speed*20))
+                self.image.fill((int(255-(255*(self.health/self.size))),0,int(self.speed)*20))
             else:
-                self.image.fill((255-(255*(self.health/self.size)),0,255))
+                self.health = 0
+                self.image.fill((int(255-(255*(self.health/self.size))),0,255))
         elif self.food > self.size /4 and self.health < self.size:
             self.food -= 0.5
             self.health += 0.5
@@ -181,9 +182,9 @@ class Animal(pg.sprite.Sprite):
                 self.health = self.size
 
             if self.speed*20 < 255:
-                self.image.fill((255-(255*(self.health/self.size)),0,self.speed*20))
+                self.image.fill((int(255-(255*(self.health/self.size))),0,int(self.speed)*20))
             else:
-                self.image.fill((255-(255*(self.health/self.size)),0,255))
+                self.image.fill((int(255-(255*(self.health/self.size))),0,255))
 
         if self.health <= 0:
             self.kill()
@@ -212,10 +213,10 @@ class Animal(pg.sprite.Sprite):
                         self.vector.rotate_ip(self.agility)
             else:
                 # Move randomly if there is no target
-                self.vector.rotate_ip(random.randint(-self.agility,self.agility))
+                self.vector.rotate_ip(random.uniform(-self.agility,self.agility))
         else:
             # Move randomly if there is no target
-            self.vector.rotate_ip(random.randint(-self.agility,self.agility))
+            self.vector.rotate_ip(random.uniform(-self.agility,self.agility))
         
 
         
@@ -367,7 +368,7 @@ class Game:
             self.clock.tick()
             self.cycles += 1
             pg.display.flip()
-            #time.sleep(0.05)
+            time.sleep(0.05)
 
 game = Game(animals,enviroConditions)
 game.run()

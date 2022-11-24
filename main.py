@@ -218,6 +218,60 @@ class TickBox(pg.sprite.Sprite):
         if self.name in data:
             self.value = data[self.name]
 
+class MultiBox(pg.sprite.Sprite):
+    def __init__(self,size,textSize,startValue,name,colour,textColour,pos,group):
+        print("Creating TextBox")
+        # Create TickBox
+        pg.sprite.Sprite.__init__(self)
+        self.image = pg.Surface([size[1]*SCALE, size[1]*SCALE])
+        self.cutout = pg.Surface([size[1]*SCALE * 0.8, size[1]*SCALE * 0.8])
+        self.image.fill(textColour)
+        self.cutout.fill(colour)
+        self.rect = self.image.get_rect(midright = (pos[0]*SCALE + size[0]*SCALE/2,pos[1]*SCALE))
+        self.rectCutout = self.cutout.get_rect(midright = (pos[0]*SCALE + size[0]*SCALE/2 - size[1]*SCALE * 0.1,pos[1]*SCALE))
+        self.font = pg.font.SysFont('Arial', int(24*SCALE*textSize))
+        self.text = self.font.render(name, 0, pg.Color(textColour))
+
+        group = group
+        group.add(self)
+
+        self.pos = (pos[0] * SCALE - (size[0]*SCALE)/2,pos[1] * SCALE - (size[1]*SCALE)/2)
+        self.name = name
+        self.textColour = textColour
+        self.value = startValue
+        self.highlight = False
+    
+    def update(self,mousePos):
+        # detect if the mouse is on the buttion
+        if self.rect.collidepoint(mousePos):
+            # add highlight effect
+            self.image.fill((self.textColour[0]-50,self.textColour[1]-50,self.textColour[2]-50))
+            self.highlight = True
+            # detect when the mouse buttion is pressed
+            if pg.mouse.get_pressed() == (True,False,False):
+                self.value = not self.value
+                return 0.3
+
+        elif self.highlight:
+            # remove highlight effect
+            self.image.fill(self.textColour)
+            self.highlight = False
+        return 0
+
+    def draw(self,screen):
+        # display the buttion then text
+        screen.blit(self.image,self.rect)
+        if self.value:
+            screen.blit(self.cutout,self.rectCutout)
+        screen.blit(self.text,self.pos)
+    
+    def getValue(self):
+        return self.name,self.value
+    
+    def setValue(self,data):
+        if self.name in data:
+            self.value = data[self.name]
+
 class DefaultGroup(pg.sprite.Group):
     def draw(self,screen):
         sprites = self.sprites()
@@ -298,25 +352,20 @@ def setup():
     TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),creatureCreatorBox,True)
     TextBox((200,25),1,"1","Speed","Number",(255,255,255),(0,0,0),(300,50),creatureCreatorBox,True)
     TextBox((200,25),1,"1","SpeedEM","Number",(255,255,255),(0,0,0),(550,50),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","SpeedFD","Number",(255,255,255),(0,0,0),(800,50),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","Health","Number",(255,255,255),(0,0,0),(300,100),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","HealthEM","Number",(255,255,255),(0,0,0),(550,100),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","HealthFD","Number",(255,255,255),(0,0,0),(800,100),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","VisionDistance","Number",(255,255,255),(0,0,0),(300,150),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","VisionDistanceEM","Number",(255,255,255),(0,0,0),(550,150),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","VisionDistanceFD","Number",(255,255,255),(0,0,0),(800,150),creatureCreatorBox,True)
+    TextBox((200,25),1,"1","Size","Number",(255,255,255),(0,0,0),(300,100),creatureCreatorBox,True)
+    TextBox((200,25),1,"1","SizeEM","Number",(255,255,255),(0,0,0),(550,100),creatureCreatorBox,True)
+    TextBox((200,25),1,"1","Sight","Number",(255,255,255),(0,0,0),(300,150),creatureCreatorBox,True)
+    TextBox((200,25),1,"1","SightEM","Number",(255,255,255),(0,0,0),(550,150),creatureCreatorBox,True)
     TextBox((200,25),1,"45","FOV","Number",(255,255,255),(0,0,0),(300,200),creatureCreatorBox,True)
     TextBox((200,25),1,"1","FOVEM","Number",(255,255,255),(0,0,0),(550,200),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","FOVFD","Number",(255,255,255),(0,0,0),(800,200),creatureCreatorBox,True)
     TickBox((200,25),1,False,"Eats Berrys",(0,0,0),(255,255,255),(300,250),creatureCreatorBox)
     creatureCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),creatureCreatorDefault)
     Text(1,"Base Value",(255,255,255),(300,25),creatureCreatorDefault)
     Text(1,"Evolution Modifier",(255,255,255),(550,25),creatureCreatorDefault)
-    Text(1,"Food Drain",(255,255,255),(800,25),creatureCreatorDefault)
     Text(1,"Speed",(255,255,255),(0,50),creatureCreatorDefault,alignment="left")
-    Text(1,"Health",(255,255,255),(0,100),creatureCreatorDefault,alignment="left")
-    Text(1,"VisionDistance",(255,255,255),(0,150),creatureCreatorDefault,alignment="left")
+    Text(1,"Size",(255,255,255),(0,100),creatureCreatorDefault,alignment="left")
+    Text(1,"Sight",(255,255,255),(0,150),creatureCreatorDefault,alignment="left")
     Text(1,"FOV",(255,255,255),(0,200),creatureCreatorDefault,alignment="left")
 
     environmentCreatorButtons = ButtonGroup()
@@ -325,14 +374,21 @@ def setup():
     Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),environmentCreatorButtons)
     environmentCreatorBox = BoxGroup()
     TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),environmentCreatorBox,True)
+    TextBox((200,25),1,"1","SpeedFD","Number",(255,255,255),(0,0,0),(800,50),environmentCreatorBox,True)
+    TextBox((200,25),1,"1","HealthFD","Number",(255,255,255),(0,0,0),(800,100),environmentCreatorBox,True)
+    TextBox((200,25),1,"1","VisionDistanceFD","Number",(255,255,255),(0,0,0),(800,150),environmentCreatorBox,True)
+    TextBox((200,25),1,"1","FOVFD","Number",(255,255,255),(0,0,0),(800,200),environmentCreatorBox,True)
     environmentCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),environmentCreatorDefault)
+    Text(1,"Food Drain",(255,255,255),(800,25),environmentCreatorDefault)
     Text(1,"Creatures",(255,255,255),(75,25),environmentCreatorDefault)
 
     simulationCreatorButtons = ButtonGroup()
     Button((100,50),2,"Exit","Exit",(255,255,255),(0,0,0),(75,850),simulationCreatorButtons)
     Button((125,50),2,"Save","Save",(255,255,255),(0,0,0),(1500,850),simulationCreatorButtons)
     Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),simulationCreatorButtons)
+    Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),simulationCreatorButtons)
+    Button((280,50),2,"Run Simulation","Run Simulation",(255,255,255),(0,0,0),(800,850),simulationCreatorButtons)
     Button((350,50),2,"Select Creature","Select Creature",(255,255,255),(0,0,0),(200,750),simulationCreatorButtons)
     
     simulationCreatorBox = BoxGroup()
