@@ -6,48 +6,9 @@ import pygame as pg
 from pygame.locals import (
     K_ESCAPE
 )
-
-OS = platform.system()
-
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
-print(pyautogui.size())
-if SCREEN_WIDTH >= SCREEN_HEIGHT:
-    SCALE = SCREEN_HEIGHT
-else:
-    SCALE = SCREEN_WIDTH
-
-SIZE_SCALE = SCALE / 1000
-SCALE /= 1000
-
-speedMod = 1
-rotSpeedMod = 1
-viewDisMod = 10
-viewAngleMod = 5
-childCostMod = 100
-
-foodPerCycle = 1
-foodValue = 100
-
-speedDrain = 0.01
-rotSpeedDrain = 0.01
-viewDisDrain = 0.001
-viewAngleDrain = 0.005
-
-startSpeed = 1
-startRotSpeed = 1
-startViewDis = 100
-startViewAngle = 45
-
-startingFood = 100
-startingHealth = 100
-
-childCost = 100
-amountOfFood = 1000
-amountOfAnimals = 10
-TITLE = 'Evolution'
-
-animals = [["test",amountOfAnimals,[[startSpeed,speedMod],[startRotSpeed,rotSpeedMod],[startViewDis,viewDisMod],[startViewAngle,viewAngleMod],[childCost,childCostMod]]]]
-enviroConditions = [0.01,0.01,0.001,0.005]
+SCALE = SCREEN_WIDTH / 1600
+SIZE_SCALE = SCALE / 1
 
 class AnimalGroup(pg.sprite.Group):
     def update(self,foods):
@@ -249,14 +210,19 @@ class Animal(pg.sprite.Sprite):
         #self.createChild()
 
 class FoodGroup(pg.sprite.Group):
+    def __init__(self, amountOfFood, foodValue,foodPerCycle, *args, **kwargs):
+        super(FoodGroup, self).__init__(*args, **kwargs)
+        self.foodPerCycle = foodPerCycle
+        self.amountOfFood = amountOfFood
+        self.foodValue = foodValue
     amount = 0
     def update(self):
-        self.amount += foodPerCycle
-        if self.amount > amountOfFood:
-            self.amount = amountOfFood
-        while len(self.sprites()) < amountOfFood and self.amount >= 1:
+        self.amount += self.foodPerCycle
+        if self.amount > self.amountOfFood:
+            self.amount = self.amountOfFood
+        while len(self.sprites()) < self.amountOfFood and self.amount >= 1:
             self.amount -= 1
-            Food(self,foodValue)
+            Food(self,self.foodValue)
 
 class Food(pg.sprite.Sprite):
     def __init__(self,group,value):
@@ -288,17 +254,19 @@ class Food(pg.sprite.Sprite):
         self.value = 0
         return tempValue
 
-class Game:
-    def __init__(self,animals,enviroConditions):
+class Simulation:
+    def __init__(self,screen,animals,enviroConditions):
         print("Seting Up")
         # General setup
-        pg.init()
-        self.screen = pg.display.set_mode((0,0),pg.FULLSCREEN, display=0)
-        pg.display.set_caption(TITLE)
+        self.screen = screen
+        amountOfFood = enviroConditions[0][0]
+        foodValue = enviroConditions[0][1]
+        foodPerCycle = enviroConditions[0][2]
+
         self.clock = pg.time.Clock()
         self.running = True
         # Group setup
-        self.foods = FoodGroup()
+        self.foods = FoodGroup(amountOfFood,foodValue,foodPerCycle)
 
         # Animal setup
         self.animals = []
@@ -309,7 +277,7 @@ class Game:
             animalGroup = AnimalGroup()
             self.animals.append(animalGroup)
             for i in range(0,amountOfAnimals):
-                Animal(animalGroup,self.screen, (random.randint(0,SCREEN_WIDTH),random.randint(0,SCREEN_HEIGHT)),stats,enviroConditions)
+                Animal(animalGroup,self.screen, (random.randint(0,SCREEN_WIDTH),random.randint(0,SCREEN_HEIGHT)),stats,enviroConditions[1])
 
         for i in range(0,amountOfFood):
             Food(self.foods,foodValue)
@@ -368,7 +336,4 @@ class Game:
             self.clock.tick()
             self.cycles += 1
             pg.display.flip()
-            time.sleep(0.05)
 
-game = Game(animals,enviroConditions)
-game.run()

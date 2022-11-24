@@ -3,17 +3,18 @@ import time
 import pyautogui
 import os
 import pygame as pg
+import simulation
 
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
 print(pyautogui.size())
 SCALE = SCREEN_WIDTH / 1600
 print(SCALE)
-FPS = 10
+FPS = 60
 LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 class ButtonGroup(pg.sprite.Group):
     """A group of Buttons"""
-    def update(self, mousePos: tuple) -> list:
+    def update(self, mousePos: tuple, mClick: bool) -> list:
         """Gets a list of all buttons pressed within the ButtonGroup
         
         Returns:
@@ -21,7 +22,7 @@ class ButtonGroup(pg.sprite.Group):
         pressed = []
         buttons = self.sprites()
         for button in buttons:
-            pressed.append(button.update(mousePos))
+            pressed.append(button.update(mousePos, mClick))
         return pressed
 
     def draw(self, screen: pg.Surface) -> None:
@@ -70,7 +71,7 @@ class Button(pg.sprite.Sprite):
         self.colour = colour
         self.highlight = False
 
-    def update(self, mousePos: tuple[int,int]) -> str:
+    def update(self, mousePos: tuple[int,int], mClick: bool) -> str:
         """Highlights button on mouse over, returns name when clicked.
         
         Returns:
@@ -81,7 +82,7 @@ class Button(pg.sprite.Sprite):
             self.image.fill((self.colour[0]-50,self.colour[1]-50,self.colour[2]-50))
             self.highlight = True
             # detect when the mouse button is pressed
-            if pg.mouse.get_pressed() == (True,False,False):
+            if mClick:
                 return self.name
 
         elif self.highlight:
@@ -103,12 +104,11 @@ class Button(pg.sprite.Sprite):
 
 
 class BoxGroup(pg.sprite.Group):
-    def update(self, mousePos: tuple[int,int]) -> float:
-        clicked = 0
+    def update(self, mousePos: tuple[int,int], mClick: bool) -> float:
         boxes = self.sprites()
         for box in boxes:
-            clicked += box.update(mousePos)
-        return clicked
+            box.update(mousePos, mClick)
+
 
     def draw(self, screen: pg.Surface) -> None:
         boxes = self.sprites()
@@ -158,14 +158,14 @@ class TextBox(pg.sprite.Sprite):
         self.textColour = textColour
         self.highlight = False
     
-    def update(self, mousePos: tuple[int,int]) -> float:
+    def update(self, mousePos: tuple[int,int], mClick: bool) -> float:
         # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
             self.image.fill((self.colour[0]-50,self.colour[1]-50,self.colour[2]-50))
             self.highlight = True
             # detect when the mouse button is pressed
-            if pg.mouse.get_pressed() == (True,False,False):
+            if mClick:
                 if self.valueType == "Number":
                     if self.deleteValue:
                         value = NumEditor()
@@ -179,13 +179,11 @@ class TextBox(pg.sprite.Sprite):
                 if value != None:
                     self.value = value
                     self.text = self.font.render(value, 0, pg.Color(self.textColour))
-                return 0.4
 
         elif self.highlight:
             # remove highlight effect
             self.image.fill(self.colour)
             self.highlight = False
-        return 0.0
 
     def draw(self, screen: pg.Surface) -> None:
         # display the button then text
@@ -229,22 +227,20 @@ class TickBox(pg.sprite.Sprite):
         self.value = startValue
         self.highlight = False
     
-    def update(self, mousePos: tuple[int,int]) -> float:
+    def update(self, mousePos: tuple[int,int], mClick: bool):
         # detect if the mouse is on the button
         if self.rect.collidepoint(mousePos):
             # add highlight effect
             self.image.fill((self.textColour[0]-50,self.textColour[1]-50,self.textColour[2]-50))
             self.highlight = True
             # detect when the mouse button is pressed
-            if pg.mouse.get_pressed() == (True,False,False):
+            if mClick:
                 self.value = not self.value
-                return 0.3
 
         elif self.highlight:
             # remove highlight effect
             self.image.fill(self.textColour)
             self.highlight = False
-        return 0.0
 
     def draw(self, screen: pg.Surface) -> None:
         # display the button then text
@@ -262,58 +258,51 @@ class TickBox(pg.sprite.Sprite):
 
 
 class MultiBox(pg.sprite.Sprite):
-    def __init__(self,size,textSize,startValue,name,colour,textColour,pos,group) -> None:
-        print("Creating TextBox")
-        # Create TickBox
+    def __init__(self,quantity: int,size: tuple[int,int],textSize:int,position: tuple[int,int],group) -> None:
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.Surface([size[1]*SCALE, size[1]*SCALE])
-        self.cutout = pg.Surface([size[1]*SCALE * 0.8, size[1]*SCALE * 0.8])
-        self.image.fill(textColour)
-        self.cutout.fill(colour)
-        self.rect = self.image.get_rect(midright = (pos[0]*SCALE + size[0]*SCALE/2,pos[1]*SCALE))
-        self.rectCutout = self.cutout.get_rect(midright = (pos[0]*SCALE + size[0]*SCALE/2 - size[1]*SCALE * 0.1,pos[1]*SCALE))
-        self.font = pg.font.SysFont('Arial', int(24*SCALE*textSize))
-        self.text = self.font.render(name, 0, pg.Color(textColour))
-
+        print("Creating multi box")
+        # Create multiBox
         group = group
         group.add(self)
+        self.creaturelist = []
 
-        self.pos = (pos[0] * SCALE - (size[0]*SCALE)/2,pos[1] * SCALE - (size[1]*SCALE)/2)
-        self.name = name
-        self.textColour = textColour
-        self.value = startValue
-        self.highlight = False
-    
-    def update(self,mousePos):
-        # detect if the mouse is on the buttion
-        if self.rect.collidepoint(mousePos):
-            # add highlight effect
-            self.image.fill((self.textColour[0]-50,self.textColour[1]-50,self.textColour[2]-50))
-            self.highlight = True
-            # detect when the mouse buttion is pressed
-            if pg.mouse.get_pressed() == (True,False,False):
-                self.value = not self.value
-                return 0.3
+        self.multiButtons = []
+        self.multiButtons.append(ButtonGroup())
+        for i in range(0,quantity):
+            Button((size[0],size[1]),textSize,"",i,(255,255,255),(0,0,0),(position[0]+size[0]*0.5,(position[1]+size[1]*0.5)+size[1]*i),self.multiButtons[0])
 
-        elif self.highlight:
-            # remove highlight effect
-            self.image.fill(self.textColour)
-            self.highlight = False
-        return 0
+        Button((size[0],size[1]),textSize,"Select Creature","Select Creature",(255,255,255),(0,0,0),(position[0]+size[0]*0.5,(position[1]+size[1]*0.5)+size[1]*(i+1)),self.multiButtons[0])
 
-    def draw(self,screen):
-        # display the buttion then text
-        screen.blit(self.image,self.rect)
-        if self.value:
-            screen.blit(self.cutout,self.rectCutout)
-        screen.blit(self.text,self.pos)
+        # buttons that can be activated
+        self.multiButtons.append(ButtonGroup())
+        Button((size[0]*0.5,size[1]),textSize,"Next","Next",(255,255,255),(0,0,0),(position[0]+size[0]*0.25,(position[1]+size[1]/2)+size[1]*(i+2)),self.multiButtons[1])
+        self.multiButtons.append(ButtonGroup())
+        Button((size[0]*0.5,size[1]),textSize,"Prev","Prev",(255,255,255),(0,0,0),(position[0]+size[0]*0.75,(position[1]+size[1]/2)+size[1]*(i+2)),self.multiButtons[2])
+
     
-    def getValue(self):
-        return self.name,self.value
+    def update(self, mousePos: tuple[int,int], mClick: bool) -> float:
+        pressed = self.multiButtons[0].update(mousePos,mClick)
+        if pressed == "Select Creature":
+            self.creaturelist.append(FileFinder("Creatures")["Name"])
+            self.creaturelist.sort()
+
+        
+        
+
+
+    def draw(self, screen: pg.Surface) -> None:
+        # display the button then text
+        self.multiButtons[0].draw(screen)
+        self.multiButtons[1].draw(screen)
+        self.multiButtons[2].draw(screen)
     
-    def setValue(self,data):
+    def getValue(self) -> tuple[str, int]:
+        return self.name, self.value
+    
+    def setValue(self, data: dict) -> None:
         if self.name in data:
             self.value = data[self.name]
+            self.text = self.font.render(self.value, 0, pg.Color(self.textColour))
 
 
 class DefaultGroup(pg.sprite.Group):
@@ -452,13 +441,14 @@ def setup() -> tuple[ButtonGroup,
     Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),simulationCreatorButtons)
     Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),simulationCreatorButtons)
     Button((280,50),2,"Run Simulation","Run Simulation",(255,255,255),(0,0,0),(800,850),simulationCreatorButtons)
-    Button((350,50),2,"Select Creature","Select Creature",(255,255,255),(0,0,0),(200,750),simulationCreatorButtons)
     
     simulationCreatorBox = BoxGroup()
     TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),simulationCreatorBox,True)
+    MultiBox(10,(300,50),2,(10,50),simulationCreatorBox)
     simulationCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),simulationCreatorDefault)
     Text(1,"Creatures",(255,255,255),(75,25),simulationCreatorDefault)
+    
 
     textEditorButtons = ButtonGroup()
     Button((100,25),1,"Cancel","Cancel",(255,255,255),(0,0,0),(700,500),textEditorButtons)
@@ -514,14 +504,12 @@ def setup() -> tuple[ButtonGroup,
 
 def menu() -> None:
     print("Menu")
-    # Small Delay before buttons activate to stop accidental clicks
     screen.fill((0,0,0))
     menuButtons.draw(screen)
     pg.display.flip()
-    time.sleep(0.5)
-    timeDelay = 0
     # wait for button to be pressed
     while running:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -530,10 +518,12 @@ def menu() -> None:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
 
         mousePos=pg.mouse.get_pos()
 
-        pressed = menuButtons.update(mousePos) 
+        pressed = menuButtons.update(mousePos,mClick) 
 
         # Detecting if there was a button pressed
         for press in pressed:
@@ -541,10 +531,10 @@ def menu() -> None:
             # Find what button was pressed
                 if press == "Creature Creator":
                     CreatureCreator()
-                    timeDelay = 0.5
+                  
                 elif press == "Environment Creator":
                     EnvironmentCreator()
-                    timeDelay = 0.5
+
                 elif press == "Simulation Creator":
                     SimulationCreator()
                 
@@ -555,23 +545,15 @@ def menu() -> None:
         menuButtons.draw(screen)
 
         pg.display.flip()
-        if timeDelay:
-            time.sleep(timeDelay)
-            timeDelay = 0
-        # run menu at 60 fps
+        
+        # run menu at set fps
         time.sleep(1/ FPS)
     
 def CreatureCreator() -> None:
     print("Creature Creator")
-    # Small Delay before buttons activate to stop accidental clicks
-    screen.fill((0,0,0))
-    creatureCreatorButtons.draw(screen)
-    creatureCreatorBox.draw(screen)
-    creatureCreatorDefault.draw(screen)
-    pg.display.flip()
-    time.sleep(0.5)
-    timeDelay = 0
+   
     while True:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -580,11 +562,14 @@ def CreatureCreator() -> None:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
+
         
         mousePos=pg.mouse.get_pos()
 
-        pressed = creatureCreatorButtons.update(mousePos) 
-        timeDelay = creatureCreatorBox.update(mousePos)
+        pressed = creatureCreatorButtons.update(mousePos, mClick) 
+        creatureCreatorBox.update(mousePos, mClick)
 
         # Detecting if there was a button pressed
         for press in pressed:
@@ -600,13 +585,13 @@ def CreatureCreator() -> None:
                     data = FileFinder("Creatures")
                     if data != None:
                         creatureCreatorBox.setValues(data)
-                    timeDelay = 0.5
+                    
                 elif press == "Delete":
                     data = creatureCreatorBox.getValues()
                     name = data.pop("Name")
                     if Confirm("Delete",f"Delete {name}?"):
                         deleteFile("Creatures",name)
-                    timeDelay = 0.5
+                    
 
         # clear screen and set background colour
         screen.fill((0,0,0))
@@ -616,23 +601,14 @@ def CreatureCreator() -> None:
         creatureCreatorDefault.draw(screen)
 
         pg.display.flip()
-        if timeDelay:
-            time.sleep(timeDelay)
-            timeDelay = 0
-        # run at 60 fps
+        # run at set fps
         time.sleep(1/ FPS)
 
 def EnvironmentCreator() -> None:
     print("Environment Creator")
-    # Small Delay before buttons activate to stop accidental clicks
-    screen.fill((0,0,0))
-    environmentCreatorButtons.draw(screen)
-    environmentCreatorBox.draw(screen)
-    environmentCreatorDefault.draw(screen)
-    pg.display.flip()
-    time.sleep(0.5)
-    timeDelay = 0
+
     while True:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -641,11 +617,14 @@ def EnvironmentCreator() -> None:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
+
         
         mousePos=pg.mouse.get_pos()
 
-        pressed = environmentCreatorButtons.update(mousePos) 
-        timeDelay = environmentCreatorBox.update(mousePos)
+        pressed = environmentCreatorButtons.update(mousePos, mClick) 
+        environmentCreatorBox.update(mousePos, mClick)
 
         # Detecting if there was a button pressed
         for press in pressed:
@@ -661,7 +640,6 @@ def EnvironmentCreator() -> None:
                     data = FileFinder("Environment")
                     if data != None:
                         environmentCreatorBox.setValues(data)
-                    timeDelay = 0.5
 
         # clear screen and set background colour
         screen.fill((0,0,0))
@@ -671,23 +649,15 @@ def EnvironmentCreator() -> None:
         environmentCreatorDefault.draw(screen)
 
         pg.display.flip()
-        if timeDelay:
-            time.sleep(timeDelay)
-            timeDelay = 0
-        # run at 60 fps
+
+        # run at set fps
         time.sleep(1/ FPS)
 
 def SimulationCreator() -> None:
     print("Simulation Creator")
-    # Small Delay before buttons activate to stop accidental clicks
-    screen.fill((0,0,0))
-    simulationCreatorButtons.draw(screen)
-    simulationCreatorBox.draw(screen)
-    simulationCreatorDefault.draw(screen)
-    pg.display.flip()
-    time.sleep(0.5)
-    timeDelay = 0
+
     while True:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -696,11 +666,13 @@ def SimulationCreator() -> None:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
         
         mousePos=pg.mouse.get_pos()
 
-        pressed = simulationCreatorButtons.update(mousePos) 
-        timeDelay = simulationCreatorBox.update(mousePos)
+        pressed = simulationCreatorButtons.update(mousePos, mClick) 
+        simulationCreatorBox.update(mousePos, mClick)
 
         # Detecting if there was a button pressed
         for press in pressed:
@@ -708,6 +680,9 @@ def SimulationCreator() -> None:
                 # Find what button was pressed
                 if press == "Exit":
                     return
+                elif press == "Run Simulation":
+                    sim = simulation.Simulation(screen,[["name",1000,[[10,1],[10,1],[1000000,1],[360,1],[20,1]]]],[[100,10,20],[0.001,0.0,0.0,0.0]])
+                    sim.run()
                 elif press == "Save":
                     data = simulationCreatorBox.getValues()
                     name = data.pop("Name")
@@ -716,7 +691,6 @@ def SimulationCreator() -> None:
                     data = FileFinder("Simulation")
                     if data != None:
                         simulationCreatorBox.setValues(data)
-                    timeDelay = 0.5
 
         # clear screen and set background colour
         screen.fill((0,0,0))
@@ -726,15 +700,11 @@ def SimulationCreator() -> None:
         simulationCreatorDefault.draw(screen)
 
         pg.display.flip()
-        if timeDelay:
-            time.sleep(timeDelay)
-            timeDelay = 0
-        # run at 60 fps
+        # run at set fps
         time.sleep(1/ FPS)
 
 def FileFinder(valueType: str) -> dict:
     print("File Finder")
-    timeDelay = 0
     # Get names for buttons
     fileNames = folderRead(f"assets/{valueType}")
     page = 0
@@ -745,15 +715,9 @@ def FileFinder(valueType: str) -> dict:
     amountOfPages = len(fileNames)-1
     # change the button text to match
     fileFinderButtons[0].setText(buttonText)
-    # Small Delay before buttons activate to stop accidental clicks
-    screen.fill((0,0,0))
-    fileFinderButtons[0].draw(screen)
-    fileFinderBox.draw(screen)
-    if amountOfPages > page:
-        fileFinderButtons[1].draw(screen)
-    pg.display.flip()
-    time.sleep(0.5)
+    
     while True:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -762,15 +726,17 @@ def FileFinder(valueType: str) -> dict:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
         
         mousePos=pg.mouse.get_pos()
 
-        pressed = fileFinderButtons[0].update(mousePos) 
+        pressed = fileFinderButtons[0].update(mousePos, mClick) 
         if amountOfPages > page:
-            pressed += fileFinderButtons[1].update(mousePos) 
+            pressed += fileFinderButtons[1].update(mousePos, mClick) 
         if page > 0:
-            pressed += fileFinderButtons[2].update(mousePos) 
-        timeDelay = fileFinderBox.update(mousePos)
+            pressed += fileFinderButtons[2].update(mousePos, mClick) 
+        fileFinderBox.update(mousePos, mClick)
 
         # Detecting if there was a button pressed
         for press in pressed:
@@ -795,7 +761,6 @@ def FileFinder(valueType: str) -> dict:
                     amountOfPages = len(fileNames)-1
                     # change the button text to match
                     fileFinderButtons[0].setText(buttonText)
-                    timeDelay = 0.5
                 elif press == "Previous":
                     page -= 1
                     for i in range(0,12):
@@ -806,7 +771,6 @@ def FileFinder(valueType: str) -> dict:
                     amountOfPages = len(fileNames)-1
                     # change the button text to match
                     fileFinderButtons[0].setText(buttonText)
-                    timeDelay = 0.5
                 else:
                     name = fileNames[page][press]
                     data = LoadFile(name,valueType)
@@ -823,23 +787,15 @@ def FileFinder(valueType: str) -> dict:
         if page > 0:
             fileFinderButtons[2].draw(screen)
         pg.display.flip()
-        if timeDelay:
-            time.sleep(timeDelay)
-            timeDelay = 0
-        # run at 60 fps
+        # run at set fps
         time.sleep(1/ FPS)
 
 def NumEditor(number: str="") -> str:
     print("Num Editor")
     numbers = str(number)
-    # Small Delay before buttons activate to stop accidental clicks
-    screen.fill((0,0,0))
-    SpriteRender((400,50),(255,255,255),(800,450),screen)
-    TextRender(numbers,2,(0,0,0),(800,450),screen)
-    textEditorButtons.draw(screen)
-    pg.display.flip()
-    time.sleep(0.5)
+    
     while True:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -863,10 +819,12 @@ def NumEditor(number: str="") -> str:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
 
         mousePos=pg.mouse.get_pos()
 
-        pressed = textEditorButtons.update(mousePos) 
+        pressed = textEditorButtons.update(mousePos, mClick) 
         # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
@@ -890,14 +848,9 @@ def NumEditor(number: str="") -> str:
 
 def TextEditor(text: str="") -> str:
     print("Text Editor")
-    # Small Delay before buttons activate to stop accidental clicks
-    screen.fill((0,0,0))
-    SpriteRender((600,50),(255,255,255),(800,450),screen)
-    TextRender(text,2,(0,0,0),(800,450),screen)
-    textEditorButtons.draw(screen)
-    pg.display.flip()
-    time.sleep(0.5)
+
     while True:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -925,10 +878,12 @@ def TextEditor(text: str="") -> str:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
 
         mousePos=pg.mouse.get_pos()
 
-        pressed = textEditorButtons.update(mousePos) 
+        pressed = textEditorButtons.update(mousePos, mClick) 
         # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
@@ -952,18 +907,14 @@ def TextEditor(text: str="") -> str:
 
 def Confirm(buttonText: str="Confirm", text: str="auto") -> bool:
     print("Confirm")
-    # Small Delay before buttons activate to stop accidental clicks
     if text == "auto":
         text = f"{buttonText}"
     data = {"Confirm":buttonText,"Text":text}
     confirmButtons.setText(data)
     confirmDefault.setText(data)
-    screen.fill((0,0,0))
-    confirmDefault.draw(screen)
-    confirmButtons.draw(screen)
-    pg.display.flip()
-    time.sleep(0.5)
+    
     while True:
+        mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -972,10 +923,12 @@ def Confirm(buttonText: str="Confirm", text: str="auto") -> bool:
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
 
         mousePos=pg.mouse.get_pos()
 
-        pressed = confirmButtons.update(mousePos) 
+        pressed = confirmButtons.update(mousePos, mClick) 
         # Detecting if there was a button pressed
         for press in pressed:
             if press != None:
