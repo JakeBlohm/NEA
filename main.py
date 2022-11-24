@@ -265,6 +265,9 @@ class MultiBox(pg.sprite.Sprite):
         group = group
         group.add(self)
         self.creaturelist = []
+        self.buttonList = [[]]
+        self.quantity = quantity
+        self.page = 0
 
         self.multiButtons = []
         self.multiButtons.append(ButtonGroup())
@@ -281,10 +284,31 @@ class MultiBox(pg.sprite.Sprite):
 
     
     def update(self, mousePos: tuple[int,int], mClick: bool) -> float:
+    
         pressed = self.multiButtons[0].update(mousePos,mClick)
-        if pressed == "Select Creature":
-            self.creaturelist.append(FileFinder("Creatures")["Name"])
-            self.creaturelist.sort()
+        if "Select Creature" in pressed:
+            newName = FileFinder("Creatures")["Name"]
+            self.creaturelist.append(newName)
+            self.updateButtons()
+
+
+        
+    
+    def updateButtons(self):
+        for creature in self.creaturelist
+            if len(self.buttonList[-1]) > self.quantity:
+                self.buttonList.append([creature])
+            else:
+                self.buttonList[-1].append(creature)
+        buttonText = {}
+        for i in range(len(self.buttonList[self.page])):
+            buttonText[i] = self.buttonList[self.page][i]
+            self.amountOfPages = len(self.buttonList)-1
+            # change the button text to match
+            self.multiButtons[0].setText(buttonText)
+
+
+
 
         
         
