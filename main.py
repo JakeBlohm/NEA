@@ -278,18 +278,21 @@ class MultiBox(pg.sprite.Sprite):
 
         # buttons that can be activated
         self.multiButtons.append(ButtonGroup())
-        Button((size[0]*0.5,size[1]),textSize,"Next","Next",(255,255,255),(0,0,0),(position[0]+size[0]*0.25,(position[1]+size[1]/2)+size[1]*(i+2)),self.multiButtons[1])
+        Button((size[0]*0.5,size[1]),textSize,"Next","Next",(255,255,255),(0,0,0),(position[0]+size[0]*0.75,(position[1]+size[1]/2)+size[1]*(i+2)),self.multiButtons[1])
         self.multiButtons.append(ButtonGroup())
-        Button((size[0]*0.5,size[1]),textSize,"Prev","Prev",(255,255,255),(0,0,0),(position[0]+size[0]*0.75,(position[1]+size[1]/2)+size[1]*(i+2)),self.multiButtons[2])
+        Button((size[0]*0.5,size[1]),textSize,"Prev","Prev",(255,255,255),(0,0,0),(position[0]+size[0]*0.25,(position[1]+size[1]/2)+size[1]*(i+2)),self.multiButtons[2])
 
     
     def update(self, mousePos: tuple[int,int], mClick: bool) -> float:
     
         pressed = self.multiButtons[0].update(mousePos,mClick)
         if "Select Creature" in pressed:
-            newName = FileFinder("Creatures")["Name"]
-            self.creaturelist.append(newName)
-            self.updateButtons()
+            newName = FileFinder("Creatures")
+            if newName:
+                newName = newName["Name"]
+                if newName not in self.creaturelist:
+                    self.creaturelist.append(newName)
+                    self.updateButtons()
         
         if len(self.buttonList)-1 > self.page:
             pressed = self.multiButtons[1].update(mousePos,mClick)
@@ -297,12 +300,15 @@ class MultiBox(pg.sprite.Sprite):
                 self.page += 1
                 self.updateButtons()
         
-        
-        if len(self.buttonList)-1 < self.page:
+
+        elif self.page > 0:
             pressed = self.multiButtons[2].update(mousePos,mClick)
             if "Prev" in pressed:
                 self.page -= 1
                 self.updateButtons()
+
+        
+        
 
 
 
@@ -311,16 +317,18 @@ class MultiBox(pg.sprite.Sprite):
     def updateButtons(self):
         self.buttonList = [[]]
         for creature in self.creaturelist:
-            if len(self.buttonList[-1]) > self.quantity:
+            if len(self.buttonList[-1]) >= self.quantity:
                 self.buttonList.append([creature])
             else:
                 self.buttonList[-1].append(creature)
         buttonText = {}
         for i in range(len(self.buttonList[self.page])):
             buttonText[i] = self.buttonList[self.page][i]
-            self.amountOfPages = len(self.buttonList)-1
-            # change the button text to match
-            self.multiButtons[0].setText(buttonText)
+        for j in range(i+1 ,self.quantity):
+            buttonText[j] = ""
+        self.amountOfPages = len(self.buttonList)-1
+        # change the button text to match
+        self.multiButtons[0].setText(buttonText)
 
 
 
@@ -335,7 +343,7 @@ class MultiBox(pg.sprite.Sprite):
         if len(self.buttonList)-1 > self.page:
             pressed = self.multiButtons[1].draw(screen)
         
-        if len(self.buttonList)-1 < self.page:
+        elif self.page > 0:
             pressed = self.multiButtons[2].draw(screen)
     
     def getValue(self) -> tuple[str, int]:
