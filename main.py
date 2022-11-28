@@ -290,12 +290,27 @@ class MultiBox(pg.sprite.Sprite):
             newName = FileFinder("Creatures")["Name"]
             self.creaturelist.append(newName)
             self.updateButtons()
+        
+        if len(self.buttonList)-1 > self.page:
+            pressed = self.multiButtons[1].update(mousePos,mClick)
+            if "Next" in pressed:
+                self.page += 1
+                self.updateButtons()
+        
+        
+        if len(self.buttonList)-1 < self.page:
+            pressed = self.multiButtons[2].update(mousePos,mClick)
+            if "Prev" in pressed:
+                self.page -= 1
+                self.updateButtons()
+
 
 
         
     
     def updateButtons(self):
-        for creature in self.creaturelist
+        self.buttonList = [[]]
+        for creature in self.creaturelist:
             if len(self.buttonList[-1]) > self.quantity:
                 self.buttonList.append([creature])
             else:
@@ -317,8 +332,11 @@ class MultiBox(pg.sprite.Sprite):
     def draw(self, screen: pg.Surface) -> None:
         # display the button then text
         self.multiButtons[0].draw(screen)
-        self.multiButtons[1].draw(screen)
-        self.multiButtons[2].draw(screen)
+        if len(self.buttonList)-1 > self.page:
+            pressed = self.multiButtons[1].draw(screen)
+        
+        if len(self.buttonList)-1 < self.page:
+            pressed = self.multiButtons[2].draw(screen)
     
     def getValue(self) -> tuple[str, int]:
         return self.name, self.value
@@ -468,7 +486,7 @@ def setup() -> tuple[ButtonGroup,
     
     simulationCreatorBox = BoxGroup()
     TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),simulationCreatorBox,True)
-    MultiBox(10,(300,50),2,(10,50),simulationCreatorBox)
+    MultiBox(2,(300,50),2,(10,50),simulationCreatorBox)
     simulationCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),simulationCreatorDefault)
     Text(1,"Creatures",(255,255,255),(75,25),simulationCreatorDefault)
