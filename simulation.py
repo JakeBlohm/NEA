@@ -186,12 +186,16 @@ class Animal(pg.sprite.Sprite):
         # Moves the sprite if it is off screen
         if self.rect.left < 0:
             self.pos = (SCREEN_WIDTH - self.image.get_width()/1.50,SCREEN_HEIGHT - self.pos[1])
+            self.foundTarget = False
         elif self.rect.right > SCREEN_WIDTH:
             self.pos = (0 + self.image.get_width()/1.50,SCREEN_HEIGHT - self.pos[1])
+            self.foundTarget = False
         if self.rect.top <= 0:
             self.pos = (SCREEN_WIDTH - self.pos[0],SCREEN_HEIGHT - self.image.get_height()/1.50)
+            self.foundTarget = False
         elif self.rect.bottom >= SCREEN_HEIGHT:
             self.pos = (SCREEN_WIDTH - self.pos[0],0 + self.image.get_height()/1.50)
+            self.foundTarget = False
         self.rect.center = self.pos
         
         # Tests if it has enouge food to reproduce

@@ -4,6 +4,7 @@ import pyautogui
 import os
 import pygame as pg
 import simulation
+import json
 
 SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
 print(pyautogui.size())
@@ -258,21 +259,32 @@ class TickBox(pg.sprite.Sprite):
 
 
 class MultiBox(pg.sprite.Sprite):
-    def __init__(self,quantity: int,size: tuple[int,int],textSize:int,position: tuple[int,int],group) -> None:
+    def __init__(self,name,quantity: int,size: tuple[int,int],textSize:int,position: tuple[int,int],group,numbers = False) -> None:
         pg.sprite.Sprite.__init__(self)
         print("Creating multi box")
         # Create multiBox
         group = group
         group.add(self)
-        self.creaturelist = []
+        self.nameDic = {}
         self.buttonList = [[]]
         self.quantity = quantity
         self.page = 0
+        self.name = name
 
         self.multiButtons = []
         self.multiButtons.append(ButtonGroup())
+
+        if numbers:
+            sizeMod = 0.75
+            self.multiNumB = ButtonGroup()
+            for i in range(0,quantity):
+                Button((size[0]*0.25,size[1]),textSize,"",i,(255,255,255),(0,0,0),(position[0]+size[0]*0.875,(position[1]+size[1]*0.5)+size[1]*i),self.multiNumB)
+
+        else:
+            sizeMod = 1
+
         for i in range(0,quantity):
-            Button((size[0],size[1]),textSize,"",i,(255,255,255),(0,0,0),(position[0]+size[0]*0.5,(position[1]+size[1]*0.5)+size[1]*i),self.multiButtons[0])
+            Button((size[0]*sizeMod,size[1]),textSize,"",i,(255,255,255),(0,0,0),(position[0]+size[0]*0.5*sizeMod,(position[1]+size[1]*0.5)+size[1]*i),self.multiButtons[0])
 
         Button((size[0],size[1]),textSize,"Select Creature","Select Creature",(255,255,255),(0,0,0),(position[0]+size[0]*0.5,(position[1]+size[1]*0.5)+size[1]*(i+1)),self.multiButtons[0])
 
@@ -282,7 +294,7 @@ class MultiBox(pg.sprite.Sprite):
         self.multiButtons.append(ButtonGroup())
         Button((size[0]*0.5,size[1]),textSize,"Prev","Prev",(255,255,255),(0,0,0),(position[0]+size[0]*0.25,(position[1]+size[1]/2)+size[1]*(i+2)),self.multiButtons[2])
 
-    
+
     def update(self, mousePos: tuple[int,int], mClick: bool) -> float:
     
         pressed = self.multiButtons[0].update(mousePos,mClick)
@@ -290,9 +302,30 @@ class MultiBox(pg.sprite.Sprite):
             newName = FileFinder("Creatures")
             if newName:
                 newName = newName["Name"]
-                if newName not in self.creaturelist:
-                    self.creaturelist.append(newName)
+                if newName not in self.nameDic:
+                    self.nameDic[newName] = 0
                     self.updateButtons()
+        else:
+            for i in pressed:
+                if i != None:
+                    if len(self.buttonList[self.page]) >= i+1:
+                        name = self.buttonList[self.page][i][0]
+                        self.nameDic.pop(name)
+                        self.updateButtons()
+
+        pressed = self.multiNumB.update(mousePos,mClick)
+        for i in pressed:
+            if i != None:
+                if len(self.buttonList[self.page]) >= i+1:
+                    num = int(NumEditor())
+                    name = self.buttonList[self.page][i][0]
+                    self.nameDic[name] = num
+                    self.updateButtons()
+                else:
+                    message("Error No Creature Set")
+        
+
+
         
         if len(self.buttonList)-1 > self.page:
             pressed = self.multiButtons[1].update(mousePos,mClick)
@@ -316,19 +349,27 @@ class MultiBox(pg.sprite.Sprite):
     
     def updateButtons(self):
         self.buttonList = [[]]
-        for creature in self.creaturelist:
-            if len(self.buttonList[-1]) >= self.quantity:
-                self.buttonList.append([creature])
+        for name in self.nameDic:
+            if len(self.buttonList[-1]) < self.quantity:
+                self.buttonList[-1].append([name,self.nameDic[name]])
             else:
-                self.buttonList[-1].append(creature)
+                self.buttonList.append([[name,self.nameDic[name]]])
         buttonText = {}
-        for i in range(len(self.buttonList[self.page])):
-            buttonText[i] = self.buttonList[self.page][i]
+        numText = {}
+        if len(self.buttonList[self.page]) == 0:
+            i = -1
+        else:
+            for i in range(len(self.buttonList[self.page])):
+                buttonText[i] = self.buttonList[self.page][i][0]
+                numText[i] = str(self.buttonList[self.page][i][1])
         for j in range(i+1 ,self.quantity):
             buttonText[j] = ""
+            numText[j] = ""
         self.amountOfPages = len(self.buttonList)-1
         # change the button text to match
+
         self.multiButtons[0].setText(buttonText)
+        self.multiNumB.setText(numText)
 
 
 
@@ -345,14 +386,16 @@ class MultiBox(pg.sprite.Sprite):
         
         elif self.page > 0:
             pressed = self.multiButtons[2].draw(screen)
+
+        self.multiNumB.draw(screen)
     
     def getValue(self) -> tuple[str, int]:
-        return self.name, self.value
+        return self.name, self.nameDic
     
     def setValue(self, data: dict) -> None:
-        if self.name in data:
-            self.value = data[self.name]
-            self.text = self.font.render(self.value, 0, pg.Color(self.textColour))
+        print(data)
+        self.nameDic = data[self.name]
+        print(data[self.name])
 
 
 class DefaultGroup(pg.sprite.Group):
@@ -494,7 +537,7 @@ def setup() -> tuple[ButtonGroup,
     
     simulationCreatorBox = BoxGroup()
     TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),simulationCreatorBox,True)
-    MultiBox(2,(300,50),2,(10,50),simulationCreatorBox)
+    MultiBox("Creatures",2,(300,50),2,(10,50),simulationCreatorBox,True)
     simulationCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),simulationCreatorDefault)
     Text(1,"Creatures",(255,255,255),(75,25),simulationCreatorDefault)
@@ -735,10 +778,11 @@ def SimulationCreator() -> None:
                     sim.run()
                 elif press == "Save":
                     data = simulationCreatorBox.getValues()
+                    print(data)
                     name = data.pop("Name")
-                    SaveFile(name,"Simulation",data)
+                    SaveFile(name,"Simulations",data)
                 elif press == "Load":
-                    data = FileFinder("Simulation")
+                    data = FileFinder("Simulations")
                     if data != None:
                         simulationCreatorBox.setValues(data)
 
@@ -762,6 +806,8 @@ def FileFinder(valueType: str) -> dict:
     buttonText = {}
     for i in range(len(fileNames[page])):
         buttonText[i] = fileNames[page][i]
+    for j in range(i+1 ,12):
+        buttonText[j] = ""
     amountOfPages = len(fileNames)-1
     # change the button text to match
     fileFinderButtons[0].setText(buttonText)
@@ -1000,27 +1046,21 @@ def Confirm(buttonText: str="Confirm", text: str="auto") -> bool:
 
 def SaveFile(name: str, type: str, dictionary: dict) -> None:
     fileSaved = False
-    fileOpen = False
-    try:
-        # try and save file will error if there is a file with that name already
-        file = open(f"assets/{type}/{name}.txt","x")
-        fileOpen = True
-    except:
+    file = f"assets/{type}/{name}.json"
+    
+    if os.path.exists(file):
         # the file exists, asking user if they want to overwrite the data
         if Confirm("Overwrite","This file already exists"):
             # overwriting file
-            file = open(f"assets/{type}/{name}.txt","w")
-            fileOpen = True
-    
-    if fileOpen:
-        # convert dictionary to string so it can be saved
-        data = ""
-        for key in dictionary:
-            data += f"{key}:{dictionary[key]}\n"
-        # save data to file
-        file.write(data)
-        file.close()
+            with open(file, "w+") as file:
+                file.write(json.dumps(dictionary,indent=4))
+            fileSaved = True
+    else:
+        # The file does no exist so it is safe to save the data
+        with open(file, "w+") as file:
+            file.write(json.dumps(dictionary,indent=4))
         fileSaved = True
+
     
     if fileSaved:
         # display message that file has been saved
@@ -1032,26 +1072,16 @@ def SaveFile(name: str, type: str, dictionary: dict) -> None:
 def LoadFile(name: str, type: str) -> dict:
     try:
         # try to open file
-        file = open(f"assets/{type}/{name}.txt","r")
-        data = file.read()
-        file.close()
+        with open(f"assets/{type}/{name}.json","r") as file:
+            data = json.load(file)
     except:
         # no file at location will cause an error
         message("File could not be found")
         return None
-    
-    # convert the files text back in to a dictionary
-    data = data.split("\n")
-    dictionary = {'Name':name}
-    for value in data:
-        value = value.split(":")
-        if value != ['']:
-            key = value[0]
-            value = value[1]
-            dictionary[key] = value
+    print
     # file loaded message
     message(f"File {name} loaded")
-    return dictionary
+    return data
 
 def folderRead(folder: str) -> list:
     names = [[]]
@@ -1067,8 +1097,8 @@ def folderRead(folder: str) -> list:
 
 def deleteFile(folder: str, name: str) -> None:
     try:
-        open(f"assets/{folder}/{name}.txt","r")
-        os.remove(f"assets/{folder}/{name}.txt")
+        open(f"assets/{folder}/{name}.json","r")
+        os.remove(f"assets/{folder}/{name}.json")
     except:
         message("File could not be deleted")
 

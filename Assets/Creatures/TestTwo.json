@@ -1,0 +1,11 @@
+{
+    "Speed": "4",
+    "SpeedEM": "1",
+    "Size": "4",
+    "SizeEM": "1",
+    "Sight": "4",
+    "SightEM": "1",
+    "FOV": "45",
+    "FOVEM": "1",
+    "Eats Berrys": false
+}

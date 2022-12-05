@@ -1,9 +1,0 @@
-Speed:1
-SpeedEM:1
-Size:1
-SizeEM:1
-Sight:1
-SightEM:1
-FOV:45
-FOVEM:1
-Eats Berrys:False
