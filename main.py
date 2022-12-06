@@ -147,7 +147,7 @@ class TextBox(pg.sprite.Sprite):
         
         self.value = startValue
         self.font = pg.font.SysFont('Arial', int(24*SCALE*textSize))
-        self.text = self.font.render(startValue, 0, pg.Color(textColour))
+        self.text = self.font.render(str(startValue), 0, pg.Color(textColour))
 
         group = group
         group.add(self)
@@ -179,7 +179,7 @@ class TextBox(pg.sprite.Sprite):
                         value = TextEditor(self.value)
                 if value != None:
                     self.value = value
-                    self.text = self.font.render(value, 0, pg.Color(self.textColour))
+                    self.text = self.font.render(str(value), 0, pg.Color(self.textColour))
 
         elif self.highlight:
             # remove highlight effect
@@ -197,7 +197,7 @@ class TextBox(pg.sprite.Sprite):
     def setValue(self, data: dict) -> None:
         if self.name in data:
             self.value = data[self.name]
-            self.text = self.font.render(self.value, 0, pg.Color(self.textColour))
+            self.text = self.font.render(str(self.value), 0, pg.Color(self.textColour))
 
 
 class TickBox(pg.sprite.Sprite):
@@ -299,7 +299,7 @@ class MultiBox(pg.sprite.Sprite):
     
         pressed = self.multiButtons[0].update(mousePos,mClick)
         if "Select Creature" in pressed:
-            newName = FileFinder("Creatures")
+            newName = FileFinder("Creatures",False)
             if newName:
                 newName = newName["Name"]
                 if newName not in self.nameDic:
@@ -317,15 +317,12 @@ class MultiBox(pg.sprite.Sprite):
         for i in pressed:
             if i != None:
                 if len(self.buttonList[self.page]) >= i+1:
-                    num = int(NumEditor())
+                    num = NumEditor()
                     name = self.buttonList[self.page][i][0]
                     self.nameDic[name] = num
                     self.updateButtons()
                 else:
                     message("Error No Creature Set")
-        
-
-
         
         if len(self.buttonList)-1 > self.page:
             pressed = self.multiButtons[1].update(mousePos,mClick)
@@ -339,13 +336,6 @@ class MultiBox(pg.sprite.Sprite):
             if "Prev" in pressed:
                 self.page -= 1
                 self.updateButtons()
-
-        
-        
-
-
-
-        
     
     def updateButtons(self):
         self.buttonList = [[]]
@@ -374,10 +364,6 @@ class MultiBox(pg.sprite.Sprite):
 
 
 
-        
-        
-
-
     def draw(self, screen: pg.Surface) -> None:
         # display the button then text
         self.multiButtons[0].draw(screen)
@@ -396,6 +382,7 @@ class MultiBox(pg.sprite.Sprite):
         print(data)
         self.nameDic = data[self.name]
         print(data[self.name])
+        self.updateButtons()
 
 
 class DefaultGroup(pg.sprite.Group):
@@ -495,23 +482,26 @@ def setup() -> tuple[ButtonGroup,
     Button((150,50),2,"Delete","Delete",(255,255,255),(0,0,0),(1175,850),creatureCreatorButtons)
     creatureCreatorBox = BoxGroup()
     TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","Speed","Number",(255,255,255),(0,0,0),(300,50),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","SpeedEM","Number",(255,255,255),(0,0,0),(550,50),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","Size","Number",(255,255,255),(0,0,0),(300,100),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","SizeEM","Number",(255,255,255),(0,0,0),(550,100),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","Sight","Number",(255,255,255),(0,0,0),(300,150),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","SightEM","Number",(255,255,255),(0,0,0),(550,150),creatureCreatorBox,True)
-    TextBox((200,25),1,"45","FOV","Number",(255,255,255),(0,0,0),(300,200),creatureCreatorBox,True)
-    TextBox((200,25),1,"1","FOVEM","Number",(255,255,255),(0,0,0),(550,200),creatureCreatorBox,True)
-    TickBox((200,25),1,False,"Eats Berrys",(0,0,0),(255,255,255),(300,250),creatureCreatorBox)
+    TextBox((200,25),1,10,"Speed","Number",(255,255,255),(0,0,0),(300,50),creatureCreatorBox,True)
+    TextBox((200,25),1,1,"SpeedEM","Number",(255,255,255),(0,0,0),(550,50),creatureCreatorBox,True)
+    TextBox((200,25),1,10,"Agility","Number",(255,255,255),(0,0,0),(300,100),creatureCreatorBox,True)
+    TextBox((200,25),1,1,"AgilityEM","Number",(255,255,255),(0,0,0),(550,100),creatureCreatorBox,True)
+    TextBox((200,25),1,100,"Size","Number",(255,255,255),(0,0,0),(300,150),creatureCreatorBox,True)
+    TextBox((200,25),1,10,"SizeEM","Number",(255,255,255),(0,0,0),(550,150),creatureCreatorBox,True)
+    TextBox((200,25),1,100,"Sight","Number",(255,255,255),(0,0,0),(300,200),creatureCreatorBox,True)
+    TextBox((200,25),1,10,"SightEM","Number",(255,255,255),(0,0,0),(550,200),creatureCreatorBox,True)
+    TextBox((200,25),1,45,"FOV","Number",(255,255,255),(0,0,0),(300,250),creatureCreatorBox,True)
+    TextBox((200,25),1,20,"FOVEM","Number",(255,255,255),(0,0,0),(550,250),creatureCreatorBox,True)
+    TickBox((200,25),1,False,"Eats Berrys",(0,0,0),(255,255,255),(300,300),creatureCreatorBox)
     creatureCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),creatureCreatorDefault)
     Text(1,"Base Value",(255,255,255),(300,25),creatureCreatorDefault)
     Text(1,"Evolution Modifier",(255,255,255),(550,25),creatureCreatorDefault)
     Text(1,"Speed",(255,255,255),(0,50),creatureCreatorDefault,alignment="left")
-    Text(1,"Size",(255,255,255),(0,100),creatureCreatorDefault,alignment="left")
-    Text(1,"Sight",(255,255,255),(0,150),creatureCreatorDefault,alignment="left")
-    Text(1,"FOV",(255,255,255),(0,200),creatureCreatorDefault,alignment="left")
+    Text(1,"Agility",(255,255,255),(0,100),creatureCreatorDefault,alignment="left")
+    Text(1,"Size",(255,255,255),(0,150),creatureCreatorDefault,alignment="left")
+    Text(1,"Sight",(255,255,255),(0,200),creatureCreatorDefault,alignment="left")
+    Text(1,"FOV",(255,255,255),(0,250),creatureCreatorDefault,alignment="left")
 
     environmentCreatorButtons = ButtonGroup()
     Button((100,50),2,"Exit","Exit",(255,255,255),(0,0,0),(75,850),environmentCreatorButtons)
@@ -532,12 +522,11 @@ def setup() -> tuple[ButtonGroup,
     Button((100,50),2,"Exit","Exit",(255,255,255),(0,0,0),(75,850),simulationCreatorButtons)
     Button((125,50),2,"Save","Save",(255,255,255),(0,0,0),(1500,850),simulationCreatorButtons)
     Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),simulationCreatorButtons)
-    Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),simulationCreatorButtons)
     Button((280,50),2,"Run Simulation","Run Simulation",(255,255,255),(0,0,0),(800,850),simulationCreatorButtons)
     
     simulationCreatorBox = BoxGroup()
     TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),simulationCreatorBox,True)
-    MultiBox("Creatures",2,(300,50),2,(10,50),simulationCreatorBox,True)
+    MultiBox("Creatures",10,(300,50),2,(10,50),simulationCreatorBox,True)
     simulationCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),simulationCreatorDefault)
     Text(1,"Creatures",(255,255,255),(75,25),simulationCreatorDefault)
@@ -768,13 +757,23 @@ def SimulationCreator() -> None:
         simulationCreatorBox.update(mousePos, mClick)
 
         # Detecting if there was a button pressed
+        print(pressed)
         for press in pressed:
             if press != None:
                 # Find what button was pressed
                 if press == "Exit":
                     return
                 elif press == "Run Simulation":
-                    sim = simulation.Simulation(screen,[["name",1000,[[10,1],[10,1],[1000000,1],[360,1],[20,1]]]],[[100,10,20],[0.001,0.0,0.0,0.0]])
+                    DictCreatures = simulationCreatorBox.getValues()["Creatures"]
+                    creatures = []
+
+                    for creature in DictCreatures:
+                        quantity = DictCreatures[creature]
+                        values = LoadFile(creature,"Creatures",False)
+                        creatures.append([quantity,values])
+
+                    # screen,[[Quantity,CreatureDict]],[[foods suff],[drains]]
+                    sim = simulation.Simulation(screen,creatures,[[100,10,20],[0.01,0.01,0.001,0.001]])
                     sim.run()
                 elif press == "Save":
                     data = simulationCreatorBox.getValues()
@@ -783,7 +782,7 @@ def SimulationCreator() -> None:
                     SaveFile(name,"Simulations",data)
                 elif press == "Load":
                     data = FileFinder("Simulations")
-                    if data != None:
+                    if data:
                         simulationCreatorBox.setValues(data)
 
         # clear screen and set background colour
@@ -797,7 +796,7 @@ def SimulationCreator() -> None:
         # run at set fps
         time.sleep(1/ FPS)
 
-def FileFinder(valueType: str) -> dict:
+def FileFinder(valueType: str, messageOn:bool = True) -> dict:
     print("File Finder")
     # Get names for buttons
     fileNames = folderRead(f"assets/{valueType}")
@@ -844,7 +843,7 @@ def FileFinder(valueType: str) -> dict:
                     data = fileFinderBox.getValues()
                     name = data.pop("File")
                     if name != "Search for file":
-                        data = LoadFile(name,valueType)
+                        data = LoadFile(name,valueType, messageOn)
                         if data != None:
                             return data
                 elif press == "Next":
@@ -869,8 +868,8 @@ def FileFinder(valueType: str) -> dict:
                     fileFinderButtons[0].setText(buttonText)
                 else:
                     name = fileNames[page][press]
-                    data = LoadFile(name,valueType)
-                    if data != None:
+                    data = LoadFile(name,valueType, messageOn)
+                    if data:
                         return data
 
         # clear screen and set background colour
@@ -886,9 +885,12 @@ def FileFinder(valueType: str) -> dict:
         # run at set fps
         time.sleep(1/ FPS)
 
-def NumEditor(number: str="") -> str:
+def NumEditor(number: int=0) -> int:
     print("Num Editor")
-    numbers = str(number)
+    if number == 0:
+        numbers = ""
+    else:
+        numbers = str(number)
     
     while True:
         mClick = False
@@ -897,6 +899,8 @@ def NumEditor(number: str="") -> str:
                 if event.key == pg.K_ESCAPE:
                     pg.quit()
                     sys.exit()
+                elif event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
+                    return int(numbers)
                 # detect if the key pressed was a number
                 elif event.key >= 48 and event.key <=57:
                     number = event.key - 48
@@ -926,7 +930,7 @@ def NumEditor(number: str="") -> str:
             if press != None:
                 # Find what button was pressed
                 if press == "Confirm":
-                    return numbers
+                    return int(numbers)
                 elif press == "Cancel":
                     return None
 
@@ -952,6 +956,8 @@ def TextEditor(text: str="") -> str:
                 if event.key == pg.K_ESCAPE:
                     pg.quit()
                     sys.exit()
+                elif event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
+                    return text
                 # detect if the key pressed was a letter
                 elif event.key >= 97 and event.key <=123:
                     letter = LETTERS[event.key - 97]
@@ -1016,6 +1022,8 @@ def Confirm(buttonText: str="Confirm", text: str="auto") -> bool:
                 if event.key == pg.K_ESCAPE:
                     pg.quit()
                     sys.exit()
+                elif event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
+                    return True
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
@@ -1069,18 +1077,20 @@ def SaveFile(name: str, type: str, dictionary: dict) -> None:
         # display message that file has not been saved
         message("File has not been saved")
 
-def LoadFile(name: str, type: str) -> dict:
+def LoadFile(name: str, type: str, messageOn: bool=True) -> dict:
     try:
         # try to open file
         with open(f"assets/{type}/{name}.json","r") as file:
             data = json.load(file)
+        data['Name'] = name 
     except:
         # no file at location will cause an error
-        message("File could not be found")
+        message(f"File {name}.json could not be found")
         return None
     print
     # file loaded message
-    message(f"File {name} loaded")
+    if messageOn:
+        message(f"File {name} loaded")
     return data
 
 def folderRead(folder: str) -> list:
@@ -1089,10 +1099,10 @@ def folderRead(folder: str) -> list:
     files.sort()
     for file in files:
         if len(names[len(names)-1]) < 12:
-            names[len(names)-1].append(file[:-4])
+            names[len(names)-1].append(file.removesuffix(".json"))
         else:
             names.append([])
-            names[len(names)-1].append(file[:-4])
+            names[len(names)-1].append(file.removesuffix(".json"))
     return names
 
 def deleteFile(folder: str, name: str) -> None:

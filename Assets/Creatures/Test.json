@@ -1,11 +1,13 @@
 {
-    "Speed": "2",
-    "SpeedEM": "1",
-    "Size": "2",
-    "SizeEM": "1",
-    "Sight": "2",
-    "SightEM": "1",
-    "FOV": "45",
-    "FOVEM": "1",
+    "Speed": 2,
+    "SpeedEM": 1,
+    "Agility": 1,
+    "AgilityEM": 1,
+    "Size": 2,
+    "SizeEM": 1,
+    "Sight": 2,
+    "SightEM": 1,
+    "FOV": 45,
+    "FOVEM": 1,
     "Eats Berrys": false
 }

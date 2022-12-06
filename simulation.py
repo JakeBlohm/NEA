@@ -36,13 +36,13 @@ class Animal(pg.sprite.Sprite):
 
        # unpack data from stats
        # traits
-       self.speed = self.evolve(stats[0][0],stats[0][1],0)
-       self.agility = self.evolve(stats[1][0],stats[1][1],0)
-       self.sight = self.evolve(stats[2][0],stats[2][1],0)
-       self.fov = self.evolve(stats[3][0],stats[3][1],0)
-       self.size = self.evolve(stats[4][0],stats[4][1],10)
+       self.speed = self.evolve(stats["Speed"],stats["SpeedEM"],0)
+       self.agility = self.evolve(stats["Agility"],stats["AgilityEM"],0)
+       self.sight = self.evolve(stats["Sight"],stats["SightEM"],0)
+       self.fov = self.evolve(stats["FOV"],stats["FOVEM"],0)
+       self.size = self.evolve(stats["Size"],stats["SizeEM"],10)
        
-       self.stats = [[self.speed,stats[0][1]],[self.agility,stats[1][1]],[self.sight,stats[2][1]],[self.fov,stats[3][1]],[self.size,stats[4][1]]]
+       self.stats = [[self.speed,stats["SpeedEM"]],[self.agility,stats["AgilityEM"]],[self.sight,stats["SightEM"]],[self.fov,stats["FOVEM"]],[self.size,stats["SizeEM"]]]
        self.enviroConditions = enviroConditions
 
        # Create an image of the block, and fill it with a color.
@@ -275,13 +275,12 @@ class Simulation:
         # Animal setup
         self.animals = []
         for animal in animals:
-            name = animal[0]
-            amountOfAnimals = animal[1]
-            stats = animal[2]
+            quantity = animal[0]
+            animal = animal[1]
             animalGroup = AnimalGroup()
             self.animals.append(animalGroup)
-            for i in range(0,amountOfAnimals):
-                Animal(animalGroup,self.screen, (random.randint(0,SCREEN_WIDTH),random.randint(0,SCREEN_HEIGHT)),stats,enviroConditions[1])
+            for i in range(0,quantity):
+                Animal(animalGroup,self.screen, (random.randint(0,SCREEN_WIDTH),random.randint(0,SCREEN_HEIGHT)),animal,enviroConditions[1])
 
         for i in range(0,amountOfFood):
             Food(self.foods,foodValue)
