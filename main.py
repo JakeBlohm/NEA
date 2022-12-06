@@ -772,8 +772,8 @@ def SimulationCreator() -> None:
                         values = LoadFile(creature,"Creatures",False)
                         creatures.append([quantity,values])
 
-                    # screen,[[Quantity,CreatureDict]],[[foods suff],[drains]]
-                    sim = simulation.Simulation(screen,creatures,[[100,10,20],[0.01,0.01,0.001,0.001]])
+                    # screen,[[Quantity,CreatureDict]],[[foods suff],[drains]],[aumount, value, persec]
+                    sim = simulation.Simulation(screen,creatures,[[100,50,20],[0.01,0.01,0.001,0.001]])
                     sim.run()
                 elif press == "Save":
                     data = simulationCreatorBox.getValues()

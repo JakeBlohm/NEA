@@ -42,7 +42,19 @@ class Animal(pg.sprite.Sprite):
        self.fov = self.evolve(stats["FOV"],stats["FOVEM"],0)
        self.size = self.evolve(stats["Size"],stats["SizeEM"],10)
        
-       self.stats = [[self.speed,stats["SpeedEM"]],[self.agility,stats["AgilityEM"]],[self.sight,stats["SightEM"]],[self.fov,stats["FOVEM"]],[self.size,stats["SizeEM"]]]
+       self.stats ={
+    "Speed": self.speed,
+    "SpeedEM": stats["SpeedEM"],
+    "Agility": self.agility,
+    "AgilityEM": stats["AgilityEM"],
+    "Size": self.size,
+    "SizeEM": stats["SizeEM"],
+    "Sight": self.sight,
+    "SightEM": stats["SightEM"],
+    "FOV": self.fov,
+    "FOVEM": stats["FOVEM"],
+    "Eats Berrys": False
+    }
        self.enviroConditions = enviroConditions
 
        # Create an image of the block, and fill it with a color.
@@ -328,10 +340,11 @@ class Simulation:
             for animal in self.animals:
                 animal.draw(self.screen)
             self.displayFps()
-            a= round(sum(self.foodAmount) / self.pop)
-            b= round(sum(self.childCost) / self.pop)
-            self.foodAmount.sort()
-            c = round(self.foodAmount[0],1)
+            if self.pop > 0:
+                a = round(sum(self.foodAmount) / self.pop)
+                b = round(sum(self.childCost) / self.pop)
+                self.foodAmount.sort()
+                c = round(self.foodAmount[0],1)
             self.displayNum((0*SCALE, 25*SCALE),self.pop,'green')
             self.displayNum((0*SCALE, 50*SCALE),a,'white')
             self.displayNum((50*SCALE, 50*SCALE),c,'white')

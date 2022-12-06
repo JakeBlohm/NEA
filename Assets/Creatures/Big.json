@@ -1,0 +1,13 @@
+{
+    "Speed": 10,
+    "SpeedEM": 1,
+    "Agility": 10,
+    "AgilityEM": 1,
+    "Size": 1000,
+    "SizeEM": 10,
+    "Sight": 100,
+    "SightEM": 10,
+    "FOV": 45,
+    "FOVEM": 20,
+    "Eats Berrys": false
+}
