@@ -1,8 +1,7 @@
-from copy import copy
 import PySimpleGUI as sg
-from numpy import average
 import random, sys, time, math, pyautogui, threading, platform
 import pygame as pg
+import threading
 from pygame.locals import (
     K_ESCAPE
 )
@@ -12,22 +11,14 @@ SIZE_SCALE = SCALE / 1
 
 class AnimalGroup(pg.sprite.Group):
     def update(self,foods):
-        Speeds = []
         pop = 0
-        veiwDiss = []
-        veiwAngles = []
-        foodAmount = []
-        childCosts = []
+        threads = []
         animals = self.sprites()
         for animal in animals:
-            traits = animal.update(foods)
-            Speeds.append(traits[0])
-            veiwDiss.append(traits[1])
-            veiwAngles.append(traits[2])
-            foodAmount.append(traits[3])
-            childCosts.append(traits[4])
+            animal.update(foods)
             pop += 1
-        return Speeds, pop, veiwDiss ,veiwAngles, foodAmount, childCosts
+
+        return pop
 
 class Animal(pg.sprite.Sprite):
     def __init__(self, group,screen, pos, stats, enviroConditions):
@@ -320,6 +311,12 @@ class Simulation:
             data=str(num),
             color=colour,
             pos=position)
+    
+    def threadMath(animal,self):
+        while True:
+            animal.update(self.foods)
+            print("Test")
+
 
     def run(self):
 
@@ -335,20 +332,25 @@ class Simulation:
             self.screen.fill((50,150,50))
             self.foods.draw(self.screen)
             self.foods.update()
+
+            s = time.perf_counter()
+            threads = []
             for animal in self.animals:
-                self.speeds, self.pop, self.viewDiss, self.viewAngles, self.foodAmount, self.childCost = animal.update(self.foods)
+                threads.append(threading.Thread(target = animal.update, args=(self.foods,)))
+
+            for thread in threads:
+                thread.start()
+            
+            for thread in threads:
+                thread.join()
+            f = time.perf_counter()
+            print(f"it took {f - s}s")
+
             for animal in self.animals:
                 animal.draw(self.screen)
+
             self.displayFps()
-            if self.pop > 0:
-                a = round(sum(self.foodAmount) / self.pop)
-                b = round(sum(self.childCost) / self.pop)
-                self.foodAmount.sort()
-                c = round(self.foodAmount[0],1)
-            self.displayNum((0*SCALE, 25*SCALE),self.pop,'green')
-            self.displayNum((0*SCALE, 50*SCALE),a,'white')
-            self.displayNum((50*SCALE, 50*SCALE),c,'white')
-            self.displayNum((0*SCALE, 75*SCALE),b,'white')
+
             self.clock.tick()
             self.cycles += 1
             pg.display.flip()

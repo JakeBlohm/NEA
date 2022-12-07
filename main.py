@@ -379,9 +379,7 @@ class MultiBox(pg.sprite.Sprite):
         return self.name, self.nameDic
     
     def setValue(self, data: dict) -> None:
-        print(data)
         self.nameDic = data[self.name]
-        print(data[self.name])
         self.updateButtons()
 
 
@@ -757,7 +755,6 @@ def SimulationCreator() -> None:
         simulationCreatorBox.update(mousePos, mClick)
 
         # Detecting if there was a button pressed
-        print(pressed)
         for press in pressed:
             if press != None:
                 # Find what button was pressed
