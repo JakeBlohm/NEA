@@ -491,6 +491,7 @@ def setup() -> tuple[ButtonGroup,
     TextBox((200,25),1,45,"FOV","Number",(255,255,255),(0,0,0),(300,250),creatureCreatorBox,True)
     TextBox((200,25),1,20,"FOVEM","Number",(255,255,255),(0,0,0),(550,250),creatureCreatorBox,True)
     TickBox((200,25),1,False,"Eats Berrys",(0,0,0),(255,255,255),(300,300),creatureCreatorBox)
+    TickBox((200,25),1,False,"Atacks Others",(0,0,0),(255,255,255),(550,300),creatureCreatorBox)
     creatureCreatorDefault = DefaultGroup()
     Text(1,"Name",(255,255,255),(1400,25),creatureCreatorDefault)
     Text(1,"Base Value",(255,255,255),(300,25),creatureCreatorDefault)
