@@ -1,24 +1,33 @@
 import PySimpleGUI as sg
-import random, sys, time, math, pyautogui, threading, platform
+import random, sys, time, threading, statistics
 import pygame as pg
 import threading
 from pygame.locals import (
     K_ESCAPE
 )
-SCREEN_WIDTH, SCREEN_HEIGHT = pyautogui.size()
-SCALE = SCREEN_WIDTH / 1600
-SIZE_SCALE = SCALE / 1
-
+from functions import SpriteRender
+from settings import SCREEN_HEIGHT,SCREEN_WIDTH,SCALE,screen
+from sprites import simButtons
+SIZE_SCALE = SCALE
 class AnimalGroup(pg.sprite.Group):
-    def update(self,foods):
-        pop = 0
-        threads = []
+    def update(self,foods,stats = None, index = -1):
         animals = self.sprites()
-        for animal in animals:
-            animal.update(foods)
-            pop += 1
-
-        return pop
+        if (index != -1):
+            tempStats = []
+            for animal in animals:
+                tempStats.append(animal.update(foods))
+            # self.speed, self.sight, self.fov, self.food, self.size
+            statsDic ={}
+            statsDic["speed"] = statistics.mean(tempStats[0])
+            statsDic["sight"] = statistics.mean(tempStats[1])
+            statsDic["fov"] = statistics.mean(tempStats[2])
+            statsDic["food"] = statistics.mean(tempStats[3])
+            statsDic["size"] = statistics.mean(tempStats[4])
+            stats[index] = statsDic
+        else:
+            for animal in animals:
+                animal.update(foods)
+        
 
 class Animal(pg.sprite.Sprite):
     def __init__(self, group,screen, pos, stats, enviroConditions):
@@ -212,9 +221,9 @@ class Animal(pg.sprite.Sprite):
         else:
             pg.draw.line(self.screen,(0,125,0),self.rect.center,(self.vector.x*self.sight+self.pos[0],self.vector.y*self.sight+self.pos[1]))
             
-
+        
         return self.speed, self.sight, self.fov, self.food, self.size
-        #self.createChild()
+
 
 class FoodGroup(pg.sprite.Group):
     def __init__(self, amountOfFood, foodValue,foodPerCycle, *args, **kwargs):
@@ -288,11 +297,9 @@ class Simulation:
         for i in range(0,amountOfFood):
             Food(self.foods,foodValue)
         print("Set Up")
-        self.speeds = []
-        self.pop = 0
-        self.viewDiss = []
-        self.viewAngles = []
+        self.animalsData = {}
         self.cycles = 0
+        self.graphView = False
 
     def render(self, font, data, color, pos):
         text = font.render(data, 0, pg.Color(color))
@@ -312,46 +319,68 @@ class Simulation:
             color=colour,
             pos=position)
     
-    def threadMath(animal,self):
-        while True:
-            animal.update(self.foods)
-            print("Test")
-
 
     def run(self):
 
         while self.running:
+            mClick = False
             for event in pg.event.get():
                 if event.type == pg.KEYDOWN:
-                    if event.key == K_ESCAPE:
+                    if event.key == pg.K_ESCAPE:
                         pg.quit()
                         sys.exit()
                 elif event.type == pg.QUIT:
                     pg.quit()
                     sys.exit()
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    mClick = True
             self.screen.fill((50,150,50))
             self.foods.draw(self.screen)
             self.foods.update()
 
             s = time.perf_counter()
             threads = []
-            for animal in self.animals:
-                threads.append(threading.Thread(target = animal.update, args=(self.foods,)))
+            if (self.cycles % 100 == 0):
+                stats = [None] * len(self.animals)
+                for i  in range(len(self.animals)):
+                    threads.append(threading.Thread(target = self.animals[i].update, args=(self.foods,stats,i,)))
+            else:
+                for animal in self.animals:
+                    threads.append(threading.Thread(target = animal.update, args=(self.foods,)))
 
             for thread in threads:
                 thread.start()
             
             for thread in threads:
                 thread.join()
+            
+            if (self.cycles % 100 == 0):
+                self.animalsData[self.cycles] = stats
+                print(self.animalsData)
+
             f = time.perf_counter()
             print(f"it took {f - s}s")
+
 
             for animal in self.animals:
                 animal.draw(self.screen)
 
+            mousePos=pg.mouse.get_pos()
+            if simButtons.update(mousePos,mClick)[0]!= None:
+                self.graphView = not(self.graphView)
+
+            if self.graphView:
+                SpriteRender((400,900),(100,100,100,10),(1400,450),self.screen)
+            
+            simButtons.draw(self.screen)
+
             self.displayFps()
 
             self.clock.tick()
+
+
             self.cycles += 1
             pg.display.flip()
 
+sim = Simulation(screen,[[100, {'Speed': 10, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 100, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Default'}]],[[100,50,20],[0.01,0.01,0.001,0.001]])
+sim.run()

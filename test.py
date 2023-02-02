@@ -1,2 +1,2 @@
-if None:
-    print("HI")
+import statistics
+print(statistics.mean([1,2,3,4]))
