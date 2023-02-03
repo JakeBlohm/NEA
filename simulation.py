@@ -319,6 +319,19 @@ class Simulation:
             color=colour,
             pos=position)
     
+    def line(self,pointOne,pointTwo,location,scale):
+        pg.draw.line(self.screen,(0,0,0),(location[0]+pointOne[0]*scale[0],location[1]+pointOne[1]scale[1]),(location[0]+pointTwo[0]*scale[0],location[1]+pointTwo[1]*scale[1]),int(2*SCALE))
+
+    def graphs(self,data,dataName,location,scale,axisScale):
+        location = (location[0]*SCALE,location[1]*SCALE)
+        scale = (scale[0]*SCALE,scale[1]*SCALE)
+        pg.draw.line(self.screen,(0,0,0),(location[0]-100*scale[0],location[1]+100*scale[1]),(location[0]-100*scale[0],location[1]-100*scale[1]),int(2*SCALE))
+        pg.draw.line(self.screen,(0,0,0),(location[0]-100*scale[0],location[1]+100*scale[1]),(location[0]+100*scale[0],location[1]+100*scale[1]),int(2*SCALE))
+        lValue
+        for cycle in data:
+            value = data[cycle][0][dataName]
+            pg.draw.line(self.screen,(0,0,0),(location[0]-100*scale[0],location[1]+100*scale[1]),(location[0]-100*scale[0],location[1]-100*scale[1]),int(2*SCALE))
+            lValue = 
 
     def run(self):
 
@@ -356,10 +369,10 @@ class Simulation:
             
             if (self.cycles % 100 == 0):
                 self.animalsData[self.cycles] = stats
-                print(self.animalsData)
+                #print(self.animalsData)
 
             f = time.perf_counter()
-            print(f"it took {f - s}s")
+            #print(f"it took {f - s}s")
 
 
             for animal in self.animals:
@@ -371,6 +384,9 @@ class Simulation:
 
             if self.graphView:
                 SpriteRender((400,900),(100,100,100,10),(1400,450),self.screen)
+                for i in range(5):
+                    self.graphs(self.animalsData,"Speed",(1420,160*i + 150),(1.7,0.6))
+                
             
             simButtons.draw(self.screen)
 
