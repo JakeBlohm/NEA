@@ -62,14 +62,13 @@ def menu() -> None:
     
 def CreatureCreator() -> None:
     print("Creature Creator")
-   
-    while True:
+    run = True
+    while run:
         mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
+                    run = False
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
@@ -117,14 +116,13 @@ def CreatureCreator() -> None:
 
 def EnvironmentCreator() -> None:
     print("Environment Creator")
-
-    while True:
+    run = True
+    while run:
         mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
+                    run = False
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
@@ -166,14 +164,13 @@ def EnvironmentCreator() -> None:
 
 def SimulationCreator() -> None:
     print("Simulation Creator")
-
-    while True:
+    run = True
+    while run:
         mClick = False
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
+                    run = False
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
@@ -203,7 +200,10 @@ def SimulationCreator() -> None:
                     # screen,[[Quantity,CreatureDict]],[[foods suff],[drains]],[aumount, value, persec]
                     sim = simulation.Simulation(screen,creatures,[[100,50,20],[0.01,0.01,0.001,0.001]])
                     print(creatures)
-                    sim.run()
+                    simData = sim.run()
+
+                    SaveFile(simulationCreatorBox.getValues()["Name"],"SimResults",simData)
+
                 elif press == "Save":
                     data = simulationCreatorBox.getValues()
                     print(data)

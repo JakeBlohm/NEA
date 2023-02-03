@@ -27,7 +27,6 @@ class AnimalGroup(pg.sprite.Group):
             statsDic["FOV"] = statistics.mean(tempStats[2])
             statsDic["Food"] = statistics.mean(tempStats[3])
             statsDic["Size"] = statistics.mean(tempStats[4])
-            print(statsDic["Size"])
             stats[index] = statsDic
         else:
             for animal in animals:
@@ -329,18 +328,31 @@ class Simulation:
     def line(self,pointOne,pointTwo,location,scale,colour=(0,0,0)):
         pg.draw.line(self.screen,colour,(location[0]+pointOne[0]*scale[0],location[1]+pointOne[1]*scale[1]),(location[0]+pointTwo[0]*scale[0],location[1]+pointTwo[1]*scale[1]),int(2*SCALE))
 
-    def graphs(self,data,animalNum,dataName,location,scale,colour=(255,0,0)):
+    def dataConverter(self,dataTypes):
+        newData = {}
+        dataScales = {}
+        for dataName in dataTypes:
+            animalsData = []
+            allValues = []
+            for animalNum in range(len(self.animals)):
+                values = []
+                for cycle in self.animalsData:
+                    value = self.animalsData[cycle][animalNum][dataName]
+                    values.append(value)
+                    allValues.append(value)
+                animalsData.append(values)
+            newData[dataName] = animalsData
+            dataScales[dataName] = 200/max(allValues)
+        return newData, dataScales
+
+    def graphs(self,data,scalers,animalNum,dataName,location,scale,colour=(255,0,0)):
         location = (location[0]*SCALE,location[1]*SCALE)
         scale = (scale[0]*SCALE,scale[1]*SCALE)
         self.line((-100,100),(-100,-100),location,scale)
         self.line((-100,100),(100,100),location,scale)
-        values=[]
-        maxCycle = len(data)  
-        for cycle in data:
-            value = data[cycle][animalNum][dataName]
-            values.append(value)
-
-        valueScale = 200/max(values)
+        values = data[dataName][animalNum]
+        maxCycle = len(values) 
+        valueScale = scalers[dataName]
         cycleScale = 200/(maxCycle-1)
         tempValue1 = 100-(values[0]*valueScale)
 
@@ -358,8 +370,7 @@ class Simulation:
             for event in pg.event.get():
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
-                        pg.quit()
-                        sys.exit()
+                        self.running = False
                 elif event.type == pg.QUIT:
                     pg.quit()
                     sys.exit()
@@ -387,7 +398,6 @@ class Simulation:
             
             if (self.cycles % 100 == 0):
                 self.animalsData[self.cycles] = stats
-                print(self.animalsData)
 
             f = time.perf_counter()
             #print(f"it took {f - s}s")
@@ -404,11 +414,13 @@ class Simulation:
                 SpriteRender((400,900),(100,100,100,10),(1400,450),self.screen)
                 dataTypes = ["Speed", "Sight", "FOV", "Food", "Size"]
                 animalColours = [(255,0,0),(0,255,0),(0,0,255)]
+
+                newData,dataScales = self.dataConverter(dataTypes)
+
                 if (self.cycles > 100):
-                    
-                    for a in range(len(self.animals)):
+                    for animalNum in range(len(self.animals)):
                         for i in range(5):
-                            self.graphs(self.animalsData,a,dataTypes[i],(1420,160*i + 150),(1.7,0.6),animalColours[a])
+                            self.graphs(newData,dataScales,animalNum,dataTypes[i],(1420,160*i + 150),(1.7,0.6),animalColours[animalNum])
                 
             
             simButtons.draw(self.screen)
@@ -420,6 +432,6 @@ class Simulation:
 
             self.cycles += 1
             pg.display.flip()
-
-#sim = Simulation(screen,[[100, {'Speed': 1, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 100, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Default'}]],[[100,50,20],[0.01,0.01,0.001,0.001]])
+        return self.animals
+#sim = Simulation(screen,[[10, {'Speed': 10, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 1000, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Big'}], [100, {'Speed': 10, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 100, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Default'}]],[[100,50,20],[0.01,0.01,0.001,0.001]])
 #sim.run()
