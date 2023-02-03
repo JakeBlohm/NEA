@@ -13,16 +13,21 @@ class AnimalGroup(pg.sprite.Group):
     def update(self,foods,stats = None, index = -1):
         animals = self.sprites()
         if (index != -1):
-            tempStats = []
+            temp = []
+            tempStats = [[],[],[],[],[]]
             for animal in animals:
-                tempStats.append(animal.update(foods))
+                temp = animal.update(foods)
+                for i in range(len(temp)):
+                    tempStats[i].append(temp[i])
+
             # self.speed, self.sight, self.fov, self.food, self.size
             statsDic ={}
-            statsDic["speed"] = statistics.mean(tempStats[0])
-            statsDic["sight"] = statistics.mean(tempStats[1])
-            statsDic["fov"] = statistics.mean(tempStats[2])
-            statsDic["food"] = statistics.mean(tempStats[3])
-            statsDic["size"] = statistics.mean(tempStats[4])
+            statsDic["Speed"] = statistics.mean(tempStats[0])
+            statsDic["Sight"] = statistics.mean(tempStats[1])
+            statsDic["FOV"] = statistics.mean(tempStats[2])
+            statsDic["Food"] = statistics.mean(tempStats[3])
+            statsDic["Size"] = statistics.mean(tempStats[4])
+            print(statsDic["Size"])
             stats[index] = statsDic
         else:
             for animal in animals:
@@ -222,7 +227,7 @@ class Animal(pg.sprite.Sprite):
             pg.draw.line(self.screen,(0,125,0),self.rect.center,(self.vector.x*self.sight+self.pos[0],self.vector.y*self.sight+self.pos[1]))
             
         
-        return self.speed, self.sight, self.fov, self.food, self.size
+        return [self.speed, self.sight, self.fov, self.food, self.size]
 
 
 class FoodGroup(pg.sprite.Group):
@@ -239,6 +244,7 @@ class FoodGroup(pg.sprite.Group):
         while len(self.sprites()) < self.amountOfFood and self.amount >= 1:
             self.amount -= 1
             Food(self,self.foodValue)
+
 
 class Food(pg.sprite.Sprite):
     def __init__(self,group,value):
@@ -269,6 +275,7 @@ class Food(pg.sprite.Sprite):
         tempValue = self.value
         self.value = 0
         return tempValue
+
 
 class Simulation:
     def __init__(self,screen,animals,enviroConditions):
@@ -319,19 +326,30 @@ class Simulation:
             color=colour,
             pos=position)
     
-    def line(self,pointOne,pointTwo,location,scale):
-        pg.draw.line(self.screen,(0,0,0),(location[0]+pointOne[0]*scale[0],location[1]+pointOne[1]scale[1]),(location[0]+pointTwo[0]*scale[0],location[1]+pointTwo[1]*scale[1]),int(2*SCALE))
+    def line(self,pointOne,pointTwo,location,scale,colour=(0,0,0)):
+        pg.draw.line(self.screen,colour,(location[0]+pointOne[0]*scale[0],location[1]+pointOne[1]*scale[1]),(location[0]+pointTwo[0]*scale[0],location[1]+pointTwo[1]*scale[1]),int(2*SCALE))
 
-    def graphs(self,data,dataName,location,scale,axisScale):
+    def graphs(self,data,animalNum,dataName,location,scale,colour=(255,0,0)):
         location = (location[0]*SCALE,location[1]*SCALE)
         scale = (scale[0]*SCALE,scale[1]*SCALE)
-        pg.draw.line(self.screen,(0,0,0),(location[0]-100*scale[0],location[1]+100*scale[1]),(location[0]-100*scale[0],location[1]-100*scale[1]),int(2*SCALE))
-        pg.draw.line(self.screen,(0,0,0),(location[0]-100*scale[0],location[1]+100*scale[1]),(location[0]+100*scale[0],location[1]+100*scale[1]),int(2*SCALE))
-        lValue
+        self.line((-100,100),(-100,-100),location,scale)
+        self.line((-100,100),(100,100),location,scale)
+        values=[]
+        maxCycle = len(data)  
         for cycle in data:
-            value = data[cycle][0][dataName]
-            pg.draw.line(self.screen,(0,0,0),(location[0]-100*scale[0],location[1]+100*scale[1]),(location[0]-100*scale[0],location[1]-100*scale[1]),int(2*SCALE))
-            lValue = 
+            value = data[cycle][animalNum][dataName]
+            values.append(value)
+
+        valueScale = 200/max(values)
+        cycleScale = 200/(maxCycle-1)
+        tempValue1 = 100-(values[0]*valueScale)
+
+        for i in range(maxCycle-1):
+            tempValue2 = 100-(values[i+1]*valueScale)
+
+            self.line((((i)*cycleScale)-100,tempValue1),(((i+1)*cycleScale)-100,tempValue2),location,scale,colour)
+
+            tempValue1 = tempValue2
 
     def run(self):
 
@@ -369,7 +387,7 @@ class Simulation:
             
             if (self.cycles % 100 == 0):
                 self.animalsData[self.cycles] = stats
-                #print(self.animalsData)
+                print(self.animalsData)
 
             f = time.perf_counter()
             #print(f"it took {f - s}s")
@@ -384,8 +402,13 @@ class Simulation:
 
             if self.graphView:
                 SpriteRender((400,900),(100,100,100,10),(1400,450),self.screen)
-                for i in range(5):
-                    self.graphs(self.animalsData,"Speed",(1420,160*i + 150),(1.7,0.6))
+                dataTypes = ["Speed", "Sight", "FOV", "Food", "Size"]
+                animalColours = [(255,0,0),(0,255,0),(0,0,255)]
+                if (self.cycles > 100):
+                    
+                    for a in range(len(self.animals)):
+                        for i in range(5):
+                            self.graphs(self.animalsData,a,dataTypes[i],(1420,160*i + 150),(1.7,0.6),animalColours[a])
                 
             
             simButtons.draw(self.screen)
@@ -398,5 +421,5 @@ class Simulation:
             self.cycles += 1
             pg.display.flip()
 
-sim = Simulation(screen,[[100, {'Speed': 10, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 100, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Default'}]],[[100,50,20],[0.01,0.01,0.001,0.001]])
-sim.run()
+#sim = Simulation(screen,[[100, {'Speed': 1, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 100, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Default'}]],[[100,50,20],[0.01,0.01,0.001,0.001]])
+#sim.run()

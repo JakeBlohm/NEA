@@ -52,7 +52,7 @@ simulationCreatorButtons = ButtonGroup()
 Button((100,50),2,"Exit","Exit",(255,255,255),(0,0,0),(75,850),simulationCreatorButtons)
 Button((125,50),2,"Save","Save",(255,255,255),(0,0,0),(1500,850),simulationCreatorButtons)
 Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1350,850),simulationCreatorButtons)
-Button((280,50),2,"Run Simulation","Run Simulation",(255,255,255),(0,0,0),(800,850),simulationCreatorButtons)
+Button((330,50),2,"Run Simulation","Run Simulation",(255,255,255),(0,0,0),(800,850),simulationCreatorButtons)
 
 simulationCreatorBox = BoxGroup()
 TextBox((300,25),1,"Name","Name","Text",(255,255,255),(0,0,0),(1400,50),simulationCreatorBox,True)
@@ -64,4 +64,4 @@ Text(1,"Creatures",(255,255,255),(75,25),simulationCreatorDefault)
 # For simulation
 
 simButtons = ButtonGroup()
-Button((65,25),1,"Graphs","Graphs",(255,255,255),(0,0,0),(1550,20),simButtons)
+Button((80,25),1,"Graphs","Graphs",(255,255,255),(0,0,0),(1550,20),simButtons)
