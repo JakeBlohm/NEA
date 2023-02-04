@@ -6,11 +6,11 @@ from sprites import (
     menuButtons, creatureCreatorButtons, creatureCreatorBox,
     creatureCreatorDefault, environmentCreatorBox, environmentCreatorButtons,
     environmentCreatorDefault, simulationCreatorBox, simulationCreatorButtons,
-    simulationCreatorDefault
+    simulationCreatorDefault, GraphDisplayButtons
     )
 from settings import FPS, screen,clock
-from functions import SaveFile, deleteFile, LoadFile
-from baseFunctions import Confirm
+from baseFunctions import TextEditor
+from functions import SaveFile, deleteFile, LoadFile,Confirm, dataConverter, graphs, stringToRgb
 from advFunctions import FileFinder
 
 def menu() -> None:
@@ -48,6 +48,9 @@ def menu() -> None:
 
                 elif press == "Simulation Creator":
                     SimulationCreator()
+
+                elif press == "Display Data":
+                    DisplayData()
                 
 
         # clear screen and set background colour
@@ -197,12 +200,18 @@ def SimulationCreator() -> None:
                         values = LoadFile(creature,"Creatures",False)
                         creatures.append([quantity,values])
 
-                    # screen,[[Quantity,CreatureDict]],[[foods suff],[drains]],[aumount, value, persec]
+                    # screen,[[Quantity,CreatureDict]],[[foods suff],[drains]],[amount, value, persec]
                     sim = simulation.Simulation(screen,creatures,[[100,50,20],[0.01,0.01,0.001,0.001]])
                     print(creatures)
                     simData = sim.run()
-
-                    SaveFile(simulationCreatorBox.getValues()["Name"],"SimResults",simData)
+                    while True:
+                        simName = TextEditor(simulationCreatorBox.getValues()["Name"],"Save data as")
+                        if simName:
+                            if SaveFile(simName,"SimResults",simData):
+                                break
+                        else:
+                            break
+                    DisplayData(simData)
 
                 elif press == "Save":
                     data = simulationCreatorBox.getValues()
@@ -222,6 +231,72 @@ def SimulationCreator() -> None:
         simulationCreatorDefault.draw(screen)
 
         pg.display.flip()
+        # run at set fps
+        time.sleep(1/ FPS)
+
+def DisplayData(data = None) -> None:
+    print("Display Data")
+    run = True
+    if data:
+        names= []
+        dataTypes = []
+        animalColours = []
+        for name in data[0]:
+            names.append(name)
+            animalColours.append(stringToRgb(name))
+        for type in data[0][name]:
+            dataTypes.append(type)
+        newData,scalers = dataConverter(data,dataTypes,names)
+
+    while run:
+        mClick = False
+        for event in pg.event.get():
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    run = False
+            elif event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                mClick = True
+
+        
+        mousePos=pg.mouse.get_pos()
+
+        pressed = GraphDisplayButtons.update(mousePos, mClick) 
+
+        # Detecting if there was a button pressed
+        for press in pressed:
+            if press != None:
+                # Find what button was pressed
+                if press == "Exit":
+                    return
+                elif press == "Load":
+                    data = FileFinder("SimResults")
+                    data.pop("Name")
+                    names= []
+                    dataTypes = []
+                    animalColours = []
+                    for name in data["0"]:
+                        names.append(name)
+                        animalColours.append(stringToRgb(name))
+                    for type in data["0"][name]:
+                        dataTypes.append(type)
+                    newData,scalers = dataConverter(data,dataTypes,names)
+
+        # clear screen and set background colour
+        screen.fill((0,0,0))
+        # display the buttons
+
+        GraphDisplayButtons.draw(screen)
+
+        if data:
+            for animalNum in range(len(names)):
+                for i in range(5):
+                    graphs(newData,scalers,animalNum,dataTypes[i],(800,160*i + 100),(7,0.6),animalColours[animalNum],(255,255,255))
+
+        pg.display.flip()
+
         # run at set fps
         time.sleep(1/ FPS)
 

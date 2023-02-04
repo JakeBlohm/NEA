@@ -6,6 +6,7 @@ menuButtons = ButtonGroup()
 Button((460,50),2,"Creature Creator","Creature Creator",(255,255,255),(0,0,0),(250,50),menuButtons)
 Button((460,50),2,"Environment Creator","Environment Creator",(255,255,255),(0,0,0),(250,125),menuButtons)
 Button((460,50),2,"Setup/Run Simulation","Simulation Creator",(255,255,255),(0,0,0),(250,200),menuButtons)
+Button((460,50),2,"Display Data","Display Data",(255,255,255),(0,0,0),(250,275),menuButtons)
 creatureCreatorButtons = ButtonGroup()
 Button((100,50),2,"Exit","Exit",(255,255,255),(0,0,0),(75,850),creatureCreatorButtons)
 Button((125,50),2,"Save","Save",(255,255,255),(0,0,0),(1500,850),creatureCreatorButtons)
@@ -60,6 +61,10 @@ MultiBox("Creatures",10,(300,50),2,(10,50),simulationCreatorBox,True)
 simulationCreatorDefault = DefaultGroup()
 Text(1,"Name",(255,255,255),(1400,25),simulationCreatorDefault)
 Text(1,"Creatures",(255,255,255),(75,25),simulationCreatorDefault)
+
+GraphDisplayButtons = ButtonGroup()
+Button((100,50),2,"Exit","Exit",(255,255,255),(0,0,0),(75,850),GraphDisplayButtons)
+Button((125,50),2,"Load","Load",(255,255,255),(0,0,0),(1500,850),GraphDisplayButtons)
 
 # For simulation
 

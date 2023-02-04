@@ -4,51 +4,6 @@ from baseSprites import confirmButtons, confirmDefault,textEditorButtons
 from settings import FPS, screen, LETTERS
 from functions import SpriteRender, TextRender
 
-def Confirm(buttonText: str="Confirm", text: str="auto") -> bool:
-    print("Confirm")
-    if text == "auto":
-        text = f"{buttonText}"
-    data = {"Confirm":buttonText,"Text":text}
-    confirmButtons.setText(data)
-    confirmDefault.setText(data)
-    
-    while True:
-        mClick = False
-        for event in pg.event.get():
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
-                elif event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
-                    return True
-            elif event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-            elif event.type == pg.MOUSEBUTTONDOWN:
-                mClick = True
-
-        mousePos=pg.mouse.get_pos()
-
-        pressed = confirmButtons.update(mousePos, mClick) 
-        # Detecting if there was a button pressed
-        for press in pressed:
-            if press != None:
-                # Find what button was pressed
-                if press == "Confirm":
-                    return True
-                elif press == "Cancel":
-                    return False
-        
-        # clear screen and set background colour
-        screen.fill((0,0,0))
-        # display the buttons
-        confirmDefault.draw(screen)
-        confirmButtons.draw(screen)
-
-        pg.display.flip()
-        # run at 60 fps
-        time.sleep(1/ FPS)
-
 def NumEditor(number: int=0) -> int:
     print("Num Editor")
     if number == 0:
@@ -110,7 +65,7 @@ def NumEditor(number: int=0) -> int:
         # run at 60 fps
         time.sleep(1/ FPS)
 
-def TextEditor(text: str="") -> str:
+def TextEditor(text: str="", message: str="", allowNumbers: bool=True) -> str:
     print("Text Editor")
 
     while True:
@@ -134,6 +89,15 @@ def TextEditor(text: str="") -> str:
                     # check for to many letters
                     if len(text) > 15:
                         text = text[:-1]
+
+                elif event.key >= 48 and event.key <=57:
+                    letter = event.key - 48
+                    # add number to the string
+                    text += str(letter)
+                    # check for to many numbers
+                    if len(text) > 15:
+                        text = text[:-1]
+
                 elif event.key == pg.K_BACKSPACE:
                     # remove letter
                     text = text[:-1]
@@ -141,6 +105,7 @@ def TextEditor(text: str="") -> str:
                     text += " "
                     if len(text) > 15:
                         text = text[:-1]
+
             elif event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
@@ -166,6 +131,7 @@ def TextEditor(text: str="") -> str:
         TextRender(text,2,(0,0,0),(800,450),screen)
         # display the buttons
         textEditorButtons.draw(screen)
+        TextRender(message,2,(255,255,255),(800,300),screen)
 
         pg.display.flip()
         # run at 60 fps

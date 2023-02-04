@@ -5,14 +5,14 @@ import threading
 from pygame.locals import (
     K_ESCAPE
 )
-from functions import SpriteRender
+from functions import SpriteRender, graphs, dataConverter,stringToRgb
 from settings import SCREEN_HEIGHT,SCREEN_WIDTH,SCALE,screen
 from sprites import simButtons
 SIZE_SCALE = SCALE
 class AnimalGroup(pg.sprite.Group):
-    def update(self,foods,stats = None, index = -1):
+    def update(self,foods,stats = None, index = ""):
         animals = self.sprites()
-        if (index != -1):
+        if (index != ""):
             temp = []
             tempStats = [[],[],[],[],[]]
             for animal in animals:
@@ -20,6 +20,8 @@ class AnimalGroup(pg.sprite.Group):
                 for i in range(len(temp)):
                     tempStats[i].append(temp[i])
 
+            if range(len(temp)) == 0:
+                tempStats ={0,0,0,0,0}
             # self.speed, self.sight, self.fov, self.food, self.size
             statsDic ={}
             statsDic["Speed"] = statistics.mean(tempStats[0])
@@ -292,20 +294,26 @@ class Simulation:
 
         # Animal setup
         self.animals = []
+        self.animalsNames = []
+        self.animalColours = []
         for animal in animals:
             quantity = animal[0]
             animal = animal[1]
             animalGroup = AnimalGroup()
             self.animals.append(animalGroup)
+            self.animalsNames.append(animal["Name"])
+            self.animalColours.append(stringToRgb(animal["Name"]))
             for i in range(0,quantity):
                 Animal(animalGroup,self.screen, (random.randint(0,SCREEN_WIDTH),random.randint(0,SCREEN_HEIGHT)),animal,enviroConditions[1])
 
         for i in range(0,amountOfFood):
             Food(self.foods,foodValue)
+
         print("Set Up")
         self.animalsData = {}
         self.cycles = 0
         self.graphView = False
+        self.dataTypes = ["Speed", "Sight", "FOV", "Food", "Size"]
 
     def render(self, font, data, color, pos):
         text = font.render(data, 0, pg.Color(color))
@@ -324,44 +332,6 @@ class Simulation:
             data=str(num),
             color=colour,
             pos=position)
-    
-    def line(self,pointOne,pointTwo,location,scale,colour=(0,0,0)):
-        pg.draw.line(self.screen,colour,(location[0]+pointOne[0]*scale[0],location[1]+pointOne[1]*scale[1]),(location[0]+pointTwo[0]*scale[0],location[1]+pointTwo[1]*scale[1]),int(2*SCALE))
-
-    def dataConverter(self,dataTypes):
-        newData = {}
-        dataScales = {}
-        for dataName in dataTypes:
-            animalsData = []
-            allValues = []
-            for animalNum in range(len(self.animals)):
-                values = []
-                for cycle in self.animalsData:
-                    value = self.animalsData[cycle][animalNum][dataName]
-                    values.append(value)
-                    allValues.append(value)
-                animalsData.append(values)
-            newData[dataName] = animalsData
-            dataScales[dataName] = 200/max(allValues)
-        return newData, dataScales
-
-    def graphs(self,data,scalers,animalNum,dataName,location,scale,colour=(255,0,0)):
-        location = (location[0]*SCALE,location[1]*SCALE)
-        scale = (scale[0]*SCALE,scale[1]*SCALE)
-        self.line((-100,100),(-100,-100),location,scale)
-        self.line((-100,100),(100,100),location,scale)
-        values = data[dataName][animalNum]
-        maxCycle = len(values) 
-        valueScale = scalers[dataName]
-        cycleScale = 200/(maxCycle-1)
-        tempValue1 = 100-(values[0]*valueScale)
-
-        for i in range(maxCycle-1):
-            tempValue2 = 100-(values[i+1]*valueScale)
-
-            self.line((((i)*cycleScale)-100,tempValue1),(((i+1)*cycleScale)-100,tempValue2),location,scale,colour)
-
-            tempValue1 = tempValue2
 
     def run(self):
 
@@ -383,9 +353,11 @@ class Simulation:
             s = time.perf_counter()
             threads = []
             if (self.cycles % 100 == 0):
-                stats = [None] * len(self.animals)
+                stats = {}
+                for name in self.animalsNames:
+                    stats[name] = None
                 for i  in range(len(self.animals)):
-                    threads.append(threading.Thread(target = self.animals[i].update, args=(self.foods,stats,i,)))
+                    threads.append(threading.Thread(target = self.animals[i].update, args=(self.foods,stats,self.animalsNames[i],)))
             else:
                 for animal in self.animals:
                     threads.append(threading.Thread(target = animal.update, args=(self.foods,)))
@@ -395,9 +367,12 @@ class Simulation:
             
             for thread in threads:
                 thread.join()
-            
+
             if (self.cycles % 100 == 0):
+                print(stats)
                 self.animalsData[self.cycles] = stats
+                if (self.cycles > 100) and self.graphView:
+                    self.newData,self.dataScales = dataConverter(self.animalsData,self.dataTypes,self.animalsNames)
 
             f = time.perf_counter()
             #print(f"it took {f - s}s")
@@ -409,18 +384,15 @@ class Simulation:
             mousePos=pg.mouse.get_pos()
             if simButtons.update(mousePos,mClick)[0]!= None:
                 self.graphView = not(self.graphView)
+                print(self.animalsData)
+                self.newData,self.dataScales = dataConverter(self.animalsData,self.dataTypes,self.animalsNames)
 
             if self.graphView:
                 SpriteRender((400,900),(100,100,100,10),(1400,450),self.screen)
-                dataTypes = ["Speed", "Sight", "FOV", "Food", "Size"]
-                animalColours = [(255,0,0),(0,255,0),(0,0,255)]
-
-                newData,dataScales = self.dataConverter(dataTypes)
-
-                if (self.cycles > 100):
+                if (self.cycles > 200):
                     for animalNum in range(len(self.animals)):
                         for i in range(5):
-                            self.graphs(newData,dataScales,animalNum,dataTypes[i],(1420,160*i + 150),(1.7,0.6),animalColours[animalNum])
+                            graphs(self.newData,self.dataScales,animalNum,self.dataTypes[i],(1420,160*i + 150),(1.7,0.6),self.animalColours[animalNum])
                 
             
             simButtons.draw(self.screen)
@@ -432,6 +404,6 @@ class Simulation:
 
             self.cycles += 1
             pg.display.flip()
-        return self.animals
+        return self.animalsData
 #sim = Simulation(screen,[[10, {'Speed': 10, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 1000, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Big'}], [100, {'Speed': 10, 'SpeedEM': 1, 'Agility': 10, 'AgilityEM': 1, 'Size': 100, 'SizeEM': 10, 'Sight': 100, 'SightEM': 10, 'FOV': 45, 'FOVEM': 20, 'Eats Berrys': False, 'Name': 'Default'}]],[[100,50,20],[0.01,0.01,0.001,0.001]])
 #sim.run()
